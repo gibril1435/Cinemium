@@ -8,6 +8,7 @@ const Booking = require('./Booking');
 const BookingSeat = require('./BookingSeat');
 const AddOn = require('./AddOn');
 const AddOnSale = require('./AddOnSale');
+const Promotion = require('./Promotion');
 
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
   host: process.env.DB_HOST || 'localhost',
@@ -31,6 +32,7 @@ Booking.initModel(sequelize);
 BookingSeat.initModel(sequelize);
 AddOn.initModel(sequelize);
 AddOnSale.initModel(sequelize);
+Promotion.initModel(sequelize);
 
 // Associations
 Movie.hasMany(Showtime, { foreignKey: 'MovieID' });
@@ -71,4 +73,5 @@ module.exports = {
   BookingSeat,
   AddOn,
   AddOnSale,
+  Promotion,
 }; 

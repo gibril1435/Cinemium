@@ -19,7 +19,7 @@ const History: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/transactions')
+    api.get('/booking')
       .then(res => {
         setHistory(res.data);
         setLoading(false);

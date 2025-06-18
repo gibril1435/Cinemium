@@ -26,7 +26,7 @@ const PaymentSuccess: React.FC = () => {
   useEffect(() => {
     if (!bookingId) return;
     setLoading(true);
-    api.get(`/transactions/${bookingId}`)
+    api.get(`/booking/${bookingId}`)
       .then(res => {
         setBooking(res.data);
         setLoading(false);
@@ -40,7 +40,7 @@ const PaymentSuccess: React.FC = () => {
   const handleDownloadPDF = async () => {
     if (!bookingId) return;
     try {
-      const response = await api.get(`/transactions/${bookingId}/ticket-pdf`, {
+      const response = await api.get(`/booking/${bookingId}/ticket-pdf`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));

@@ -99,7 +99,7 @@ const SeatOrder: React.FC = () => {
       const addOnsToSend = Object.entries(selectedAddOns)
         .filter(([_, qty]) => qty > 0)
         .map(([id, qty]) => ({ id: Number(id), quantity: qty }));
-      const res = await api.post('/transactions', {
+      const res = await api.post('/booking', {
         showtimeId,
         seatIds: selectedSeats,
         addOns: addOnsToSend,

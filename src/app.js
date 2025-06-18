@@ -17,6 +17,8 @@ const studiosRoutes = require('./routes/studios.routes');
 const notificationsRoutes = require('./routes/notifications.routes');
 const ticketPriceRoutes = require('./routes/ticketPrice.routes');
 const scheduleManagementRoutes = require('./routes/scheduleManagement.routes');
+const promotionController = require('./controllers/promotionController');
+const adminPromotionRoutes = require('./routes/admin/promotions.routes');
 
 // Import tasks
 const { scheduleCleanup } = require('./tasks/notificationCleanup.task');
@@ -32,7 +34,17 @@ app.use(express.json()); // Parse JSON bodies
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', moviesRoutes);
-app.use('/api', bookingRoutes);
+app.use('/api/promotions', (req, res, next) => {
+  if (req.method === 'GET' && req.path === '/') {
+    return promotionController.getActivePromotions(req, res, next);
+  }
+  if (req.method === 'GET') {
+    return promotionController.getPromotionById(req, res, next);
+  }
+  next();
+});
+app.use('/api/admin/promotions', adminPromotionRoutes);
+app.use('/api/booking', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/addons', addonsRoutes);
 app.use('/api/admin/studios', studiosRoutes);
