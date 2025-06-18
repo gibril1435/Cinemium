@@ -9,6 +9,7 @@ type Transaction = {
   movieTitle: string;
   seat: string;
   amount: number;
+  addOns?: { name: string; quantity: number; price: number }[];
 };
 
 const History: React.FC = () => {
@@ -18,7 +19,7 @@ const History: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/history')
+    api.get('/transactions')
       .then(res => {
         setHistory(res.data);
         setLoading(false);
@@ -50,14 +51,24 @@ const History: React.FC = () => {
         ) : (
           <div className="space-y-6">
             {Object.entries(grouped).map(([date, txs]) => (
-              <div key={date}>
-                <div className="font-bold mb-2 text-[var(--text-primary)]">{date}</div>
+              <div key={date} className="border-b border-gray-700 pb-2 mb-2">
+                <div className="font-bold mb-2 text-[var(--text-primary)] text-lg">{date}</div>
                 <ul className="space-y-2">
                   {txs.map(tx => (
-                    <li key={tx.id}>
-                      <Link to={`/payment-success?bookingId=${tx.id}`} className="history-item block hover:bg-[var(--accent)] hover:bg-opacity-10 transition-colors duration-200">
-                        <span role="img" aria-label="calendar">📅</span> Tiket: {tx.movieTitle} - {new Date(tx.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-                        <span className="block text-xs text-[var(--text-secondary)] mt-1">Seat: {tx.seat} | Amount: Rp{tx.amount}</span>
+                    <li key={tx.id} className="rounded-lg overflow-hidden">
+                      <Link to={`/payment-success?bookingId=${tx.id}`} className="history-item block hover:bg-[var(--accent)] hover:bg-opacity-10 transition-colors duration-200 p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span role="img" aria-label="calendar">📅</span> <span className="font-semibold">{tx.movieTitle}</span>
+                          </div>
+                          <div className="text-xs text-[var(--text-secondary)]">{new Date(tx.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                        </div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-1">Seat: {tx.seat} | Amount: <span className="text-[var(--success)] font-bold">Rp{tx.amount}</span></div>
+                        {tx.addOns && tx.addOns.length > 0 && (
+                          <div className="text-xs text-[var(--text-secondary)] mt-1">
+                            Add-ons: {tx.addOns.map(a => `${a.name} x${a.quantity} (Rp${a.price * a.quantity})`).join(', ')}
+                          </div>
+                        )}
                       </Link>
                     </li>
                   ))}

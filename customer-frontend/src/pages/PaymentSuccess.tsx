@@ -26,7 +26,7 @@ const PaymentSuccess: React.FC = () => {
   useEffect(() => {
     if (!bookingId) return;
     setLoading(true);
-    api.get(`/booking/${bookingId}`)
+    api.get(`/transactions/${bookingId}`)
       .then(res => {
         setBooking(res.data);
         setLoading(false);
