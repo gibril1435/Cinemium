@@ -1,33 +1,48 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
-import Movies from './pages/Movies';
-import Showtimes from './pages/Showtimes';
-import Bookings from './pages/Bookings';
-import Addons from './pages/Addons';
-import Studios from './pages/Studios';
-import Pricing from './pages/Pricing';
-import Analytics from './pages/Analytics';
+import Sales from './pages/Sales';
+import CinemaManagement from './pages/CinemaManagement';
+import Notifications from './pages/Notifications';
 
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/movies" element={<Movies />} />
-          <Route path="/showtimes" element={<Showtimes />} />
-          <Route path="/bookings" element={<Bookings />} />
-          <Route path="/addons" element={<Addons />} />
-          <Route path="/studios" element={<Studios />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <div className="flex h-screen bg-gray-100">
+        {/* Sidebar */}
+        <div className="w-64 bg-[var(--primary)] text-white">
+          <div className="p-4">
+            <h1 className="text-2xl font-bold">Cinemium Admin</h1>
+          </div>
+          <nav className="mt-4">
+            <Link to="/dashboard" className="block px-4 py-2 hover:bg-[var(--accent)]">
+              Home
+            </Link>
+            <Link to="/sales" className="block px-4 py-2 hover:bg-[var(--accent)]">
+              Sales
+            </Link>
+            <Link to="/cinema-management" className="block px-4 py-2 hover:bg-[var(--accent)]">
+              Cinema Management
+            </Link>
+            <Link to="/notifications" className="block px-4 py-2 hover:bg-[var(--accent)]">
+              Notifications
+            </Link>
+          </nav>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/cinema-management" element={<CinemaManagement />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/" element={<Dashboard />} />
+          </Routes>
+        </div>
+      </div>
     </Router>
   );
-}
+};
 
 export default App;

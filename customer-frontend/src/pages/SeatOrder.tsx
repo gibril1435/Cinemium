@@ -72,7 +72,8 @@ const SeatOrder: React.FC = () => {
       } else if (seats.length < 4) {
         return [...seats, seatId];
       } else {
-        return seats; // max 4 seats
+        setError('Maximum 4 seats per transaction');
+        return seats;
       }
     });
   };
@@ -85,20 +86,27 @@ const SeatOrder: React.FC = () => {
   const totalPrice = selectedSeats.length * SEAT_PRICE + totalAddOnPrice;
 
   const handlePay = async () => {
-    if (!showtimeId || selectedSeats.length === 0) return;
+    if (!showtimeId || selectedSeats.length === 0) {
+      setError('Please select at least one seat');
+      return;
+    }
+    if (selectedSeats.length > 4) {
+      setError('Maximum 4 seats per transaction');
+      return;
+    }
     setPaying(true);
     try {
       const addOnsToSend = Object.entries(selectedAddOns)
         .filter(([_, qty]) => qty > 0)
         .map(([id, qty]) => ({ id: Number(id), quantity: qty }));
-      const res = await api.post('/booking', {
+      const res = await api.post('/transactions', {
         showtimeId,
         seatIds: selectedSeats,
         addOns: addOnsToSend,
       });
       navigate(`/payment-success?bookingId=${res.data.id}`);
-    } catch {
-      setError('Payment failed');
+    } catch (err) {
+      setError('Payment failed. Please try again.');
     } finally {
       setPaying(false);
     }

@@ -312,6 +312,73 @@
   ```
 - **Response:** 201 Created
 
+## Customer Endpoints
+
+### Movies
+- `GET /api/movies` - Get all movies
+- `GET /api/movies/:id` - Get movie details
+- `GET /api/movies/now-showing` - Get currently showing movies
+
+### Promotions
+- `GET /api/promotions` - Get all active promotions
+- `GET /api/promotions/:id` - Get promotion details
+
+### Transactions
+- `POST /api/transactions` - Create a new transaction
+  - Body: `{ showtimeId: string, seatIds: string[], addOns: { id: number, quantity: number }[] }`
+  - Response: `{ id: string, ... }`
+- `GET /api/transactions/:id` - Get transaction details
+  - Response: `{ id: string, movieTitle: string, showtime: string, seats: string[], studio: string, addOns: { name: string, quantity: number, price: number }[], totalAmount: number }`
+- `GET /api/transactions/:id/ticket-pdf` - Get PDF ticket
+  - Response: PDF file
+
+### Add-ons
+- `GET /api/addons` - Get all available add-ons
+- `GET /api/addons/:id` - Get add-on details
+
+## Admin Endpoints
+
+### Movies Management
+- `GET /api/admin/movies` - Get all movies (admin view)
+- `POST /api/admin/movies` - Create new movie
+- `PUT /api/admin/movies/:id` - Update movie
+- `DELETE /api/admin/movies/:id` - Delete movie
+
+### Showtimes Management
+- `GET /api/admin/showtimes` - Get all showtimes
+- `POST /api/admin/showtimes` - Create new showtime
+- `PUT /api/admin/showtimes/:id` - Update showtime
+- `DELETE /api/admin/showtimes/:id` - Delete showtime
+
+### Studios Management
+- `GET /api/admin/studios` - Get all studios
+- `POST /api/admin/studios` - Create new studio
+- `PUT /api/admin/studios/:id` - Update studio
+- `DELETE /api/admin/studios/:id` - Delete studio
+
+### Sales & Analytics
+- `GET /api/admin/sales` - Get sales data
+  - Query params: `startDate`, `endDate`
+  - Response: `{ totalRevenue: number, ticketSales: number, addOnSales: number, transactions: Transaction[] }`
+
+### Notifications
+- `GET /api/admin/notifications` - Get all notifications
+- `POST /api/admin/notifications` - Create new notification
+- `PUT /api/admin/notifications/:id/read` - Mark notification as read
+- `DELETE /api/admin/notifications/:id` - Delete notification
+
+### Promotions Management
+- `GET /api/admin/promotions` - Get all promotions
+- `POST /api/admin/promotions` - Create new promotion
+- `PUT /api/admin/promotions/:id` - Update promotion
+- `DELETE /api/admin/promotions/:id` - Delete promotion
+
+## Authentication
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Register
+- `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Get current user
+
 ## Error Responses
 
 All endpoints may return the following error responses:

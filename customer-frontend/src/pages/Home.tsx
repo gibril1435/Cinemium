@@ -13,26 +13,40 @@ type Movie = {
   posterUrl?: string;
 };
 
+type Promotion = {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  startDate: string;
+  endDate: string;
+};
+
 const Home: React.FC = () => {
   const { user } = useAuth();
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get('/movies')
-      .then(res => {
-        setMovies(res.data);
+    Promise.all([
+      api.get('/movies'),
+      api.get('/promotions')
+    ])
+      .then(([moviesRes, promotionsRes]) => {
+        setMovies(moviesRes.data);
+        setPromotions(promotionsRes.data);
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load movies');
+        setError('Failed to load content');
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <div className="container p-4">Loading movies...</div>;
+  if (loading) return <div className="container p-4">Loading...</div>;
   if (error) return <div className="container p-4 text-[var(--error)]">{error}</div>;
 
   // Filter movies by search
@@ -45,7 +59,7 @@ const Home: React.FC = () => {
       <Header />
       {user && <div className="container p-4 text-lg">Hi, {user.username}!</div>}
       <div className="container">
-        <MovieCarousel movies={movies} promoImage={promoImage} isLoggedIn={!!user} />
+        <MovieCarousel movies={movies} promotions={promotions} isLoggedIn={!!user} />
         <div className="mb-6">
           <input
             type="text"

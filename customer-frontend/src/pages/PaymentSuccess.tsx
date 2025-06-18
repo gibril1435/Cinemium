@@ -37,6 +37,24 @@ const PaymentSuccess: React.FC = () => {
       });
   }, [bookingId]);
 
+  const handleDownloadPDF = async () => {
+    if (!bookingId) return;
+    try {
+      const response = await api.get(`/transactions/${bookingId}/ticket-pdf`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ticket-${bookingId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      setError('Failed to download ticket');
+    }
+  };
+
   if (loading) return <div className="container p-4">Loading booking details...</div>;
   if (error) return <div className="container p-4 text-[var(--error)]">{error}</div>;
   if (!booking) return <div className="container p-4">Booking not found.</div>;
@@ -60,15 +78,12 @@ const PaymentSuccess: React.FC = () => {
               </div>
             )}
           </div>
-          {booking.ticketPdfUrl && (
-            <a
-              href={booking.ticketPdfUrl}
-              className="btn btn-primary w-full"
-              download
-            >
-              Download PDF
-            </a>
-          )}
+          <button
+            onClick={handleDownloadPDF}
+            className="btn btn-primary w-full"
+          >
+            Download PDF
+          </button>
           <button 
             className="btn btn-secondary w-full mt-4" 
             onClick={() => navigate('/')}
