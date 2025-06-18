@@ -30,7 +30,7 @@
   {
     "username": "string",
     "password": "string",
-    "source": "home|movie|seat" // Where the login was initiated
+    "source": "home|movie|seat"
   }
   ```
 - **Response:** 200 OK
@@ -41,325 +41,331 @@
   }
   ```
 
-## Customer Movie Browse Endpoints
-
-### Get Currently Showing Movies
+### Get Current User
 - **Method:** GET
-- **Path:** `/api/movies/now-showing`
-- **Description:** Retrieves list of currently showing movies for home page
-- **Query Parameters:**
-  - `search`: Optional search term for movie title
-- **Response:** 200 OK
-  ```json
-  {
-    "movies": [
-      {
-        "id": "number",
-        "title": "string",
-        "genre": "string",
-        "posterUrl": "string",
-        "showtimes": [
-          {
-            "time": "string",
-            "price": "number"
-          }
-        ]
-      }
-    ]
-  }
-  ```
-
-### Get Movie Details
-- **Method:** GET
-- **Path:** `/api/movies/:id`
-- **Description:** Retrieves detailed information about a specific movie
+- **Path:** `/api/auth/me`
+- **Description:** Returns the current user from the token
 - **Response:** 200 OK
   ```json
   {
     "id": "number",
-    "title": "string",
-    "synopsis": "string",
-    "genre": "string",
-    "director": "string",
-    "productionHouse": "string",
-    "posterUrl": "string",
-    "actors": ["string"],
-    "showtimes": [
-      {
-        "id": "number",
-        "time": "string",
-        "studio": "number",
-        "price": "number"
-      }
-    ]
+    "username": "string",
+    "role": "customer|admin"
   }
   ```
 
-## Customer Booking Flow Endpoints
-
-### Get Seat Layout
-- **Method:** GET
-- **Path:** `/api/showtimes/:showtimeId/seats`
-- **Description:** Retrieves the 8x5 seat layout for a specific showtime
-- **Response:** 200 OK
-  ```json
-  {
-    "showtimeId": "number",
-    "movieTitle": "string",
-    "showTime": "string",
-    "layout": {
-      "rows": ["A", "B", "C", "D", "E"],
-      "columns": [1, 2, 3, 4, 5, 6, 7, 8],
-      "seats": [
-        {
-          "id": "string", // e.g., "A1"
-          "status": "available|reserved|selected"
-        }
-      ]
-    }
-  }
-  ```
-
-### Process Payment
+### Logout
 - **Method:** POST
-- **Path:** `/api/transactions`
-- **Description:** Processes ticket purchase and generates QR codes
-- **Request Body:**
-  ```json
-  {
-    "showtimeId": "number",
-    "seats": ["string"], // e.g., ["A1", "A2"]
-    "addOns": [
-      {
-        "id": "number",
-        "quantity": "number"
-      }
-    ]
-  }
-  ```
-- **Response:** 201 Created
-  ```json
-  {
-    "transactionId": "number",
-    "tickets": [
-      {
-        "seatNumber": "string",
-        "qrCode": "string"
-      }
-    ],
-    "totalAmount": "number"
-  }
-  ```
-
-### Get Purchase History
-- **Method:** GET
-- **Path:** `/api/users/history`
-- **Description:** Retrieves user's purchase history grouped by date
+- **Path:** `/api/auth/logout`
+- **Description:** Securely terminates the session
 - **Response:** 200 OK
   ```json
   {
-    "history": [
-      {
-        "date": "string",
-        "transactions": [
-          {
-            "id": "number",
-            "movieTitle": "string",
-            "showTime": "string",
-            "seats": ["string"],
-            "totalAmount": "number"
-          }
-        ]
-      }
-    ]
+    "message": "Logged out successfully"
   }
   ```
 
-## Admin Statistics Endpoints
-
-### Get Dashboard Summary
-- **Method:** GET
-- **Path:** `/api/admin/dashboard`
-- **Description:** Retrieves summary data for admin dashboard
-- **Response:** 200 OK
-  ```json
-  {
-    "todayStats": {
-      "totalTickets": "number",
-      "totalRevenue": "number"
-    },
-    "filmDistribution": [
-      {
-        "movieTitle": "string",
-        "ticketsSold": "number",
-        "percentage": "number"
-      }
-    ],
-    "salesTrend": [
-      {
-        "date": "string",
-        "ticketsSold": "number",
-        "revenue": "number"
-      }
-    ]
-  }
-  ```
-
-## Admin Sales Database Endpoints
-
-### Get Weekly Sales History
-- **Method:** GET
-- **Path:** `/api/admin/sales/weeks`
-- **Description:** Retrieves sales history grouped by week
-- **Response:** 200 OK
-  ```json
-  {
-    "weeks": [
-      {
-        "weekStart": "string",
-        "weekEnd": "string",
-        "totalSales": "number",
-        "totalTickets": "number"
-      }
-    ]
-  }
-  ```
-
-### Get Weekly Sales Details
-- **Method:** GET
-- **Path:** `/api/admin/sales/weeks/:weekId`
-- **Description:** Retrieves detailed, filterable sales data for a specific week
-- **Query Parameters:**
-  - `movie`: Filter by movie
-  - `addOn`: Filter by add-on
-  - `showtime`: Filter by showtime
-  - `user`: Filter by username
-  - `date`: Filter by date
-- **Response:** 200 OK
-  ```json
-  {
-    "weekStart": "string",
-    "weekEnd": "string",
-    "transactions": [
-      {
-        "id": "number",
-        "username": "string",
-        "movieTitle": "string",
-        "showTime": "string",
-        "seats": ["string"],
-        "addOns": [
-          {
-            "name": "string",
-            "quantity": "number"
-          }
-        ],
-        "totalAmount": "number",
-        "transactionDate": "string"
-      }
-    ]
-  }
-  ```
-
-## Admin Cinema Management Endpoints
-
-### Movie Management
-
-#### Create Movie
-- **Method:** POST
-- **Path:** `/api/admin/movies`
-- **Description:** Creates a new movie entry
-- **Request Body:**
-  ```json
-  {
-    "title": "string",
-    "synopsis": "string",
-    "genre": "string",
-    "director": "string",
-    "productionHouse": "string",
-    "posterUrl": "string",
-    "actors": ["string"]
-  }
-  ```
-- **Response:** 201 Created
-
-#### Update Movie
-- **Method:** PUT
-- **Path:** `/api/admin/movies/:id`
-- **Description:** Updates an existing movie
-- **Request Body:** Same as Create Movie
-- **Response:** 200 OK
-
-#### Delete Movie
-- **Method:** DELETE
-- **Path:** `/api/admin/movies/:id`
-- **Description:** Deletes a movie and its associated showtimes
-- **Response:** 200 OK
-
-### Ticket Price Management
-
-#### Set Ticket Price
-- **Method:** POST
-- **Path:** `/api/admin/prices`
-- **Description:** Sets default or custom ticket prices
-- **Request Body:**
-  ```json
-  {
-    "isDefault": "boolean",
-    "price": "number",
-    "startDate": "string", // Required if isDefault is false
-    "endDate": "string"    // Required if isDefault is false
-  }
-  ```
-- **Response:** 201 Created
+---
 
 ## Customer Endpoints
 
 ### Movies
-- `GET /api/movies` - Get all movies
-- `GET /api/movies/:id` - Get movie details
 - `GET /api/movies/now-showing` - Get currently showing movies
+- `GET /api/movies/:id` - Get movie details
 
 ### Promotions
 - `GET /api/promotions` - Get all active promotions
 - `GET /api/promotions/:id` - Get promotion details
 
-### Transactions
-- `POST /api/transactions` - Create a new transaction
-  - Body: `{ showtimeId: string, seatIds: string[], addOns: { id: number, quantity: number }[] }`
-  - Response: `{ id: string, ... }`
-- `GET /api/transactions/:id` - Get transaction details
-  - Response: `{ id: string, movieTitle: string, showtime: string, seats: string[], studio: string, addOns: { name: string, quantity: number, price: number }[], totalAmount: number }`
-- `GET /api/transactions/:id/ticket-pdf` - Get PDF ticket
-  - Response: PDF file
-
 ### Add-ons
 - `GET /api/addons` - Get all available add-ons
 - `GET /api/addons/:id` - Get add-on details
 
+### Booking (Unified Transaction Endpoints)
+- `POST /api/booking` - Create a new booking (purchase tickets)
+  - Body: `{ showtimeId: number, seats: string[], addOns: [{ id: number, quantity: number }] }`
+  - Response: `{ transactionId: number, tickets: [{ seatNumber: string, qrCode: string }], totalAmount: number }`
+- `GET /api/booking/:id` - Get booking details
+  - Response: `{ id: number, movieTitle: string, showtime: string, studio: number, seats: string[], addOns: [{ name: string, quantity: number, price: number }], totalAmount: number }`
+- `GET /api/booking/:id/ticket-pdf` - Get PDF ticket
+  - Response: PDF file
+- `GET /api/booking/history` - Get user's booking history (includes studio number)
+  - Response: `{ history: [{ date: string, transactions: [{ id: number, movieTitle: string, showTime: string, studio: number, seats: string[], totalAmount: number }] }] }`
+
+### Seat Layout
+- `GET /api/showtimes/:showtimeId/seats` - Get seat layout for a showtime
+
+---
+
 ## Admin Endpoints
 
+### Dashboard & Analytics
+- `GET /api/admin/dashboard` - Get dashboard summary
+  - Response: 
+    ```json
+    {
+      "todayStats": {
+        "totalTickets": "number",
+        "totalRevenue": "number"
+      },
+      "topMovies": [
+        {
+          "id": "number",
+          "title": "string",
+          "ticketsSold": "number",
+          "revenue": "number"
+        }
+      ],
+      "topAddons": [
+        {
+          "id": "number",
+          "name": "string",
+          "quantitySold": "number",
+          "revenue": "number"
+        }
+      ]
+    }
+    ```
+- `GET /api/admin/sales` - Get sales data
+  - Query Parameters:
+    - `startDate`: Start date (YYYY-MM-DD)
+    - `endDate`: End date (YYYY-MM-DD)
+    - `movieId`: Filter by movie
+    - `studioId`: Filter by studio
+  - Response:
+    ```json
+    {
+      "totalRevenue": "number",
+      "ticketSales": "number",
+      "addOnSales": "number",
+      "transactions": [
+        {
+          "id": "number",
+          "movieTitle": "string",
+          "showtime": "string",
+          "studio": "number",
+          "seats": ["string"],
+          "addOns": [
+            {
+              "name": "string",
+              "quantity": "number",
+              "price": "number"
+            }
+          ],
+          "totalAmount": "number",
+          "transactionDate": "string"
+        }
+      ]
+    }
+    ```
+
 ### Movies Management
-- `GET /api/admin/movies` - Get all movies (admin view)
+- `GET /api/admin/movies` - Get all movies
+  - Response:
+    ```json
+    [
+      {
+        "id": "number",
+        "title": "string",
+        "description": "string",
+        "duration": "number",
+        "releaseDate": "string",
+        "genre": "string",
+        "director": "string",
+        "cast": ["string"],
+        "posterUrl": "string",
+        "status": "active|inactive"
+      }
+    ]
+    ```
 - `POST /api/admin/movies` - Create new movie
+  - Request Body:
+    ```json
+    {
+      "title": "string",
+      "description": "string",
+      "duration": "number",
+      "releaseDate": "string",
+      "genre": "string",
+      "director": "string",
+      "cast": ["string"],
+      "posterUrl": "string"
+    }
+    ```
 - `PUT /api/admin/movies/:id` - Update movie
+  - Request Body: Same as Create
 - `DELETE /api/admin/movies/:id` - Delete movie
 
 ### Showtimes Management
 - `GET /api/admin/showtimes` - Get all showtimes
+  - Response:
+    ```json
+    [
+      {
+        "id": "number",
+        "movieId": "number",
+        "studioId": "number",
+        "startTime": "string",
+        "endTime": "string",
+        "date": "string",
+        "price": "number",
+        "status": "scheduled|cancelled|completed"
+      }
+    ]
+    ```
 - `POST /api/admin/showtimes` - Create new showtime
+  - Request Body:
+    ```json
+    {
+      "movieId": "number",
+      "studioId": "number",
+      "startTime": "string",
+      "date": "string",
+      "price": "number"
+    }
+    ```
 - `PUT /api/admin/showtimes/:id` - Update showtime
+  - Request Body: Same as Create
 - `DELETE /api/admin/showtimes/:id` - Delete showtime
 
 ### Studios Management
 - `GET /api/admin/studios` - Get all studios
+  - Response:
+    ```json
+    [
+      {
+        "id": "number",
+        "name": "string",
+        "capacity": "number",
+        "layout": {
+          "rows": "number",
+          "columns": "number",
+          "seats": [
+            {
+              "id": "string",
+              "row": "number",
+              "column": "number",
+              "status": "available|reserved|maintenance"
+            }
+          ]
+        },
+        "status": "active|maintenance|inactive"
+      }
+    ]
+    ```
 - `POST /api/admin/studios` - Create new studio
+  - Request Body:
+    ```json
+    {
+      "name": "string",
+      "capacity": "number",
+      "rows": "number",
+      "columns": "number",
+      "status": "active|maintenance|inactive"
+    }
+    ```
 - `PUT /api/admin/studios/:id` - Update studio
+  - Request Body: Same as Create
 - `DELETE /api/admin/studios/:id` - Delete studio
 
-### Sales & Analytics
-- `GET /api/admin/sales` - Get sales data
-  - Query params: `startDate`, `endDate`
-  - Response: `{ totalRevenue: number, ticketSales: number, addOnSales: number, transactions: Transaction[] }`
+### Add-ons Management
+- `GET /api/admin/addons` - Get all add-ons
+  - Response:
+    ```json
+    [
+      {
+        "id": "number",
+        "name": "string",
+        "description": "string",
+        "price": "number",
+        "stock": "number",
+        "imageUrl": "string",
+        "category": "string",
+        "status": "active|inactive"
+      }
+    ]
+    ```
+- `POST /api/admin/addons` - Create new add-on
+  - Request Body:
+    ```json
+    {
+      "name": "string",
+      "description": "string",
+      "price": "number",
+      "stock": "number",
+      "imageUrl": "string",
+      "category": "string",
+      "status": "active|inactive"
+    }
+    ```
+- `PUT /api/admin/addons/:id` - Update add-on
+  - Request Body: Same as Create
+- `DELETE /api/admin/addons/:id` - Delete add-on
+
+### Pricing Management
+- `GET /api/admin/prices` - Get all ticket price rules
+  - Response:
+    ```json
+    [
+      {
+        "id": "number",
+        "isDefault": "boolean",
+        "price": "number",
+        "startDate": "string",
+        "endDate": "string"
+      }
+    ]
+    ```
+- `POST /api/admin/prices` - Create new ticket price rule
+  - Request Body:
+    ```json
+    {
+      "isDefault": "boolean",
+      "price": "number",
+      "startDate": "string",
+      "endDate": "string"
+    }
+    ```
+- `PUT /api/admin/prices/:id` - Update ticket price rule
+  - Request Body: Same as Create
+- `DELETE /api/admin/prices/:id` - Delete ticket price rule
+
+### Promotions Management
+- `GET /api/admin/promotions` - Get all promotions
+  - Response:
+    ```json
+    [
+      {
+        "id": "number",
+        "title": "string",
+        "description": "string",
+        "discountPercentage": "number",
+        "startDate": "string",
+        "endDate": "string",
+        "posterUrl": "string",
+        "status": "active|inactive"
+      }
+    ]
+    ```
+- `POST /api/admin/promotions` - Create new promotion
+  - Request Body:
+    ```json
+    {
+      "title": "string",
+      "description": "string",
+      "discountPercentage": "number",
+      "startDate": "string",
+      "endDate": "string",
+      "posterUrl": "string"
+    }
+    ```
+- `PUT /api/admin/promotions/:id` - Update promotion
+  - Request Body: Same as Create
+- `DELETE /api/admin/promotions/:id` - Delete promotion
+
+### Bookings Management
+- `GET /api/admin/bookings` - Get all bookings
+- `PUT /api/admin/bookings/:id/cancel` - Cancel a booking
 
 ### Notifications
 - `GET /api/admin/notifications` - Get all notifications
@@ -367,17 +373,7 @@
 - `PUT /api/admin/notifications/:id/read` - Mark notification as read
 - `DELETE /api/admin/notifications/:id` - Delete notification
 
-### Promotions Management
-- `GET /api/admin/promotions` - Get all promotions
-- `POST /api/admin/promotions` - Create new promotion
-- `PUT /api/admin/promotions/:id` - Update promotion
-- `DELETE /api/admin/promotions/:id` - Delete promotion
-
-## Authentication
-- `POST /api/auth/login` - Login
-- `POST /api/auth/register` - Register
-- `POST /api/auth/logout` - Logout
-- `GET /api/auth/me` - Get current user
+---
 
 ## Error Responses
 
