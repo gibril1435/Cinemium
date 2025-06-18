@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Movie, Showtime, Actor, MovieActor } = require('../models');
+const { Movie, Showtime } = require('../models');
 const { Op } = require('sequelize');
 const { isAdmin } = require('../middleware/auth');
 
@@ -9,7 +9,7 @@ router.get('/now-showing', async (req, res) => {
     try {
         const { search } = req.query;
         const whereClause = search ? {
-            title: {
+            Title: {
                 [Op.like]: `%${search}%`
             }
         } : {};
@@ -19,23 +19,23 @@ router.get('/now-showing', async (req, res) => {
             include: [{
                 model: Showtime,
                 where: {
-                    showDateTime: {
+                    ShowDateTime: {
                         [Op.gte]: new Date()
                     }
                 },
                 required: true
             }],
-            attributes: ['id', 'title', 'genre', 'posterUrl']
+            attributes: ['MovieID', 'Title', 'Genre', 'PosterURL']
         });
 
         const formattedMovies = movies.map(movie => ({
-            id: movie.id,
-            title: movie.title,
-            genre: movie.genre,
-            posterUrl: movie.posterUrl,
+            id: movie.MovieID,
+            title: movie.Title,
+            genre: movie.Genre,
+            posterUrl: movie.PosterURL,
             showtimes: movie.Showtimes.map(showtime => ({
-                time: showtime.showDateTime,
-                price: showtime.price
+                time: showtime.ShowDateTime,
+                price: showtime.Price
             }))
         }));
 
@@ -55,13 +55,9 @@ router.get('/:id', async (req, res) => {
         const movie = await Movie.findByPk(req.params.id, {
             include: [
                 {
-                    model: Actor,
-                    through: { attributes: [] }
-                },
-                {
                     model: Showtime,
                     where: {
-                        showDateTime: {
+                        ShowDateTime: {
                             [Op.gte]: new Date()
                         }
                     },
@@ -78,19 +74,19 @@ router.get('/:id', async (req, res) => {
         }
 
         res.json({
-            id: movie.id,
-            title: movie.title,
-            synopsis: movie.synopsis,
-            genre: movie.genre,
-            director: movie.director,
-            productionHouse: movie.productionHouse,
-            posterUrl: movie.posterUrl,
-            actors: movie.Actors.map(actor => actor.name),
+            id: movie.MovieID,
+            title: movie.Title,
+            synopsis: movie.Synopsis,
+            genre: movie.Genre,
+            director: movie.Director,
+            productionHouse: movie.ProductionHouse,
+            posterUrl: movie.PosterURL,
+            actors: movie.Actors ? movie.Actors.split(',').map(a => a.trim()) : [],
             showtimes: movie.Showtimes.map(showtime => ({
-                id: showtime.id,
-                time: showtime.showDateTime,
-                studio: showtime.studioId,
-                price: showtime.price
+                id: showtime.ShowtimeID,
+                time: showtime.ShowDateTime,
+                studio: showtime.StudioID,
+                price: showtime.Price
             }))
         });
     } catch (error) {
@@ -115,25 +111,20 @@ router.post('/', async (req, res) => {
             director,
             productionHouse,
             posterUrl,
-            actors
+            actors,
+            duration
         } = req.body;
 
         const movie = await Movie.create({
-            title,
-            synopsis,
-            genre,
-            director,
-            productionHouse,
-            posterUrl
+            Title: title,
+            Synopsis: synopsis,
+            Genre: genre,
+            Director: director,
+            ProductionHouse: productionHouse,
+            PosterURL: posterUrl,
+            Actors: actors ? actors.join(', ') : '',
+            Duration: duration
         });
-
-        // Add actors
-        if (actors && actors.length > 0) {
-            const actorRecords = await Promise.all(
-                actors.map(name => Actor.findOrCreate({ where: { name } }))
-            );
-            await movie.setActors(actorRecords.map(record => record[0]));
-        }
 
         res.status(201).json(movie);
     } catch (error) {
@@ -163,26 +154,20 @@ router.put('/:id', async (req, res) => {
             director,
             productionHouse,
             posterUrl,
-            actors
+            actors,
+            duration
         } = req.body;
 
         await movie.update({
-            title,
-            synopsis,
-            genre,
-            director,
-            productionHouse,
-            posterUrl,
-            updatedAt: new Date()
+            Title: title,
+            Synopsis: synopsis,
+            Genre: genre,
+            Director: director,
+            ProductionHouse: productionHouse,
+            PosterURL: posterUrl,
+            Actors: actors ? actors.join(', ') : '',
+            Duration: duration
         });
-
-        // Update actors
-        if (actors) {
-            const actorRecords = await Promise.all(
-                actors.map(name => Actor.findOrCreate({ where: { name } }))
-            );
-            await movie.setActors(actorRecords.map(record => record[0]));
-        }
 
         res.json(movie);
     } catch (error) {
@@ -204,9 +189,8 @@ router.delete('/:id', async (req, res) => {
                 message: 'Movie not found'
             });
         }
-
         await movie.destroy();
-        res.json({ message: 'Movie deleted successfully' });
+        res.json({ message: 'Movie deleted' });
     } catch (error) {
         console.error('Error deleting movie:', error);
         res.status(500).json({

@@ -10,7 +10,7 @@ router.post('/register', async (req, res) => {
         const { username, password } = req.body;
 
         // Check if username already exists
-        const existingUser = await User.findOne({ where: { username } });
+        const existingUser = await User.findOne({ where: { Username: username } });
         if (existingUser) {
             return res.status(400).json({
                 error: 'Validation Error',
@@ -24,8 +24,8 @@ router.post('/register', async (req, res) => {
 
         // Create user
         await User.create({
-            username,
-            passwordHash: hashedPassword
+            Username: username,
+            PasswordHash: hashedPassword
         });
 
         res.status(201).json({
@@ -47,7 +47,7 @@ router.post('/login', async (req, res) => {
         const { username, password, source } = req.body;
 
         // Find user
-        const user = await User.findOne({ where: { username } });
+        const user = await User.findOne({ where: { Username: username } });
         if (!user) {
             return res.status(401).json({
                 error: 'Authentication Error',
@@ -56,7 +56,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Verify password
-        const validPassword = await bcrypt.compare(password, user.passwordHash);
+        const validPassword = await bcrypt.compare(password, user.PasswordHash);
         if (!validPassword) {
             return res.status(401).json({
                 error: 'Authentication Error',
@@ -65,11 +65,11 @@ router.post('/login', async (req, res) => {
         }
 
         // Update last login
-        await user.update({ lastLoginAt: new Date() });
+        await user.update({ LastLoginAt: new Date() });
 
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user.id, username: user.username },
+            { userId: user.UserID, username: user.Username },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );

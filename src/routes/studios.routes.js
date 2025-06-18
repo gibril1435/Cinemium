@@ -15,9 +15,9 @@ router.get('/', async (req, res) => {
         const studios = await Studio.findAll({
             include: includeShowtimes ? [{
                 model: Showtime,
-                include: [{ model: Movie, attributes: ['title'] }],
+                include: [{ model: Movie, attributes: ['Title'] }],
                 where: {
-                    showDateTime: {
+                    ShowDateTime: {
                         [Op.gte]: new Date()
                     }
                 },
@@ -41,9 +41,9 @@ router.get('/:id', async (req, res) => {
         const studio = await Studio.findByPk(req.params.id, {
             include: [{
                 model: Showtime,
-                include: [{ model: Movie, attributes: ['title'] }],
+                include: [{ model: Movie, attributes: ['Title'] }],
                 where: {
-                    showDateTime: {
+                    ShowDateTime: {
                         [Op.gte]: new Date()
                     }
                 },
@@ -71,49 +71,28 @@ router.get('/:id', async (req, res) => {
 // Create new studio
 router.post('/', async (req, res) => {
     try {
-        const { name, capacity, layout, description } = req.body;
+        const { studioNumber, capacity } = req.body;
 
         // Validate required fields
-        if (!name || !capacity) {
+        if (!studioNumber || !capacity) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'Name and capacity are required'
+                message: 'StudioNumber and Capacity are required'
             });
         }
 
-        // Validate layout if provided
-        if (layout) {
-            if (!Array.isArray(layout) || layout.length !== 5) {
-                return res.status(400).json({
-                    error: 'Validation Error',
-                    message: 'Layout must be an array of 5 rows'
-                });
-            }
-
-            for (const row of layout) {
-                if (!Array.isArray(row) || row.length !== 8) {
-                    return res.status(400).json({
-                        error: 'Validation Error',
-                        message: 'Each row must contain exactly 8 seats'
-                    });
-                }
-            }
-        }
-
-        // Check if studio with same name exists
-        const existingStudio = await Studio.findOne({ where: { name } });
+        // Check if studio with same number exists
+        const existingStudio = await Studio.findOne({ where: { StudioNumber: studioNumber } });
         if (existingStudio) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'Studio with this name already exists'
+                message: 'Studio with this number already exists'
             });
         }
 
         const studio = await Studio.create({
-            name,
-            capacity,
-            layout: layout || Array(5).fill(Array(8).fill('available')),
-            description
+            StudioNumber: studioNumber,
+            Capacity: capacity
         });
 
         res.status(201).json(studio);
@@ -138,43 +117,22 @@ router.put('/:id', async (req, res) => {
             });
         }
 
-        const { name, capacity, layout, description } = req.body;
+        const { studioNumber, capacity } = req.body;
 
-        // Check name uniqueness if name is being changed
-        if (name && name !== studio.name) {
-            const existingStudio = await Studio.findOne({ where: { name } });
+        // Check number uniqueness if number is being changed
+        if (studioNumber && studioNumber !== studio.StudioNumber) {
+            const existingStudio = await Studio.findOne({ where: { StudioNumber: studioNumber } });
             if (existingStudio) {
                 return res.status(400).json({
                     error: 'Validation Error',
-                    message: 'Studio with this name already exists'
+                    message: 'Studio with this number already exists'
                 });
-            }
-        }
-
-        // Validate layout if provided
-        if (layout) {
-            if (!Array.isArray(layout) || layout.length !== 5) {
-                return res.status(400).json({
-                    error: 'Validation Error',
-                    message: 'Layout must be an array of 5 rows'
-                });
-            }
-
-            for (const row of layout) {
-                if (!Array.isArray(row) || row.length !== 8) {
-                    return res.status(400).json({
-                        error: 'Validation Error',
-                        message: 'Each row must contain exactly 8 seats'
-                    });
-                }
             }
         }
 
         await studio.update({
-            name: name || studio.name,
-            capacity: capacity || studio.capacity,
-            layout: layout || studio.layout,
-            description: description || studio.description
+            StudioNumber: studioNumber || studio.StudioNumber,
+            Capacity: capacity || studio.Capacity
         });
 
         res.json(studio);

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Showtime, Ticket, Transaction, TransactionAddOn, AddOn } = require('../models');
+const { Showtime, Seat, Booking, BookingSeat, AddOn, AddOnSale } = require('../models');
 const { Op } = require('sequelize');
 const { authenticate } = require('../middleware/auth');
 const QRCode = require('qrcode');
@@ -10,25 +10,18 @@ const fs = require('fs');
 // Get seat layout for a showtime
 router.get('/showtimes/:showtimeId/seats', async (req, res) => {
     try {
-        const showtime = await Showtime.findByPk(req.params.showtimeId, {
-            include: [{
-                model: Ticket,
-                attributes: ['seatNumber']
-            }]
-        });
-
+        const showtime = await Showtime.findByPk(req.params.showtimeId);
         if (!showtime) {
             return res.status(404).json({
                 error: 'Not Found',
                 message: 'Showtime not found'
             });
         }
-
-        // Create 8x5 seat layout
+        // Create 8x5 seat layout (mocked for now)
         const rows = ['A', 'B', 'C', 'D', 'E'];
         const columns = [1, 2, 3, 4, 5, 6, 7, 8];
-        const reservedSeats = new Set(showtime.Tickets.map(ticket => ticket.seatNumber));
-
+        // TODO: Fetch reserved seats from BookingSeat
+        const reservedSeats = new Set();
         const seats = [];
         for (const row of rows) {
             for (const col of columns) {
@@ -39,16 +32,11 @@ router.get('/showtimes/:showtimeId/seats', async (req, res) => {
                 });
             }
         }
-
         res.json({
-            showtimeId: showtime.id,
-            movieTitle: showtime.Movie.title,
-            showTime: showtime.showDateTime,
-            layout: {
-                rows,
-                columns,
-                seats
-            }
+            showtimeId: showtime.ShowtimeID,
+            movieTitle: 'TODO', // You can fetch movie title if needed
+            showTime: showtime.ShowDateTime,
+            layout: { rows, columns, seats }
         });
     } catch (error) {
         console.error('Error fetching seat layout:', error);
@@ -74,13 +62,7 @@ router.post('/transactions', authenticate, async (req, res) => {
         }
 
         // Check if seats are available
-        const showtime = await Showtime.findByPk(showtimeId, {
-            include: [{
-                model: Ticket,
-                attributes: ['seatNumber']
-            }]
-        });
-
+        const showtime = await Showtime.findByPk(showtimeId);
         if (!showtime) {
             return res.status(404).json({
                 error: 'Not Found',
@@ -88,7 +70,8 @@ router.post('/transactions', authenticate, async (req, res) => {
             });
         }
 
-        const reservedSeats = new Set(showtime.Tickets.map(ticket => ticket.seatNumber));
+        // TODO: Fetch reserved seats from BookingSeat
+        const reservedSeats = new Set();
         const invalidSeats = seats.filter(seat => reservedSeats.has(seat));
         if (invalidSeats.length > 0) {
             return res.status(400).json({
@@ -129,8 +112,8 @@ router.post('/transactions', authenticate, async (req, res) => {
                 transactionId: transaction.id,
                 seatNumber,
                 showtimeId,
-                movieTitle: showtime.Movie.title,
-                showTime: showtime.showDateTime
+                movieTitle: 'TODO', // You can fetch movie title if needed
+                showTime: showtime.ShowDateTime
             }));
 
             return Ticket.create({
@@ -200,7 +183,7 @@ router.get('/users/history', authenticate, async (req, res) => {
             acc[date].push({
                 id: transaction.id,
                 movieTitle: transaction.Showtime.Movie.title,
-                showTime: transaction.Showtime.showDateTime,
+                showTime: transaction.Showtime.ShowDateTime,
                 seats: transaction.Tickets.map(ticket => ticket.seatNumber),
                 totalAmount: transaction.totalAmount
             });
@@ -254,7 +237,7 @@ router.get('/tickets/:ticketId/pdf', authenticate, async (req, res) => {
         // Generate PDF
         const pdfPath = await generateTicketPDF({
             movieTitle: ticket.Transaction.Showtime.Movie.title,
-            showTime: ticket.Transaction.Showtime.showDateTime,
+            showTime: ticket.Transaction.Showtime.ShowDateTime,
             seatNumber: ticket.seatNumber,
             studio: ticket.Transaction.Showtime.studioId,
             qrCode: ticket.qrCode

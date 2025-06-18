@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { AddOn, TransactionAddOn, Transaction } = require('../models');
+const { AddOn } = require('../models');
 const { isAdmin } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } = require('date-fns');
@@ -60,8 +60,7 @@ router.get('/:id', async (req, res) => {
 // Create new add-on
 router.post('/', async (req, res) => {
     try {
-        const { name, description, price, stock, imageUrl } = req.body;
-
+        const { name, description, price, stock } = req.body;
         // Validate required fields
         if (!name || !price) {
             return res.status(400).json({
@@ -69,24 +68,20 @@ router.post('/', async (req, res) => {
                 message: 'Name and price are required'
             });
         }
-
         // Check if add-on with same name exists
-        const existingAddOn = await AddOn.findOne({ where: { name } });
+        const existingAddOn = await AddOn.findOne({ where: { Name: name } });
         if (existingAddOn) {
             return res.status(400).json({
                 error: 'Validation Error',
                 message: 'Add-on with this name already exists'
             });
         }
-
         const addOn = await AddOn.create({
-            name,
-            description,
-            price,
-            stock: stock || 0,
-            imageUrl
+            Name: name,
+            Description: description,
+            Price: price,
+            Stock: stock || 0
         });
-
         res.status(201).json(addOn);
     } catch (error) {
         console.error('Error creating add-on:', error);
