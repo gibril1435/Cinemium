@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #1a1a1a;
+    --secondary: #2d2d2d;
+    --accent: #e50914;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --success: #28a745;
+    --warning: #ffc107;
+    --error: #dc3545;
+  }
+
+  body {
+    @apply bg-[var(--primary)] text-[var(--text-primary)] min-h-screen;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+}
+
+@layer components {
+  /* Layout Components */
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Header & Navigation */
+  .header {
+    @apply bg-[var(--secondary)] shadow-lg sticky top-0 z-50;
+  }
+
+  .nav-link {
+    @apply text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-200;
+  }
+
+  .nav-link.active {
+    @apply text-[var(--accent)];
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--accent)] text-white hover:bg-opacity-90;
+  }
+
+  .btn-secondary {
+    @apply bg-[var(--secondary)] text-[var(--text-primary)] hover:bg-opacity-90;
+  }
+
+  .btn-success {
+    @apply bg-[var(--success)] text-white hover:bg-opacity-90;
+  }
+
+  /* Form Elements */
+  .input {
+    @apply bg-[var(--secondary)] text-[var(--text-primary)] rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)];
+  }
+
+  .form-group {
+    @apply mb-4;
+  }
+
+  .form-label {
+    @apply block text-[var(--text-secondary)] mb-2;
+  }
+
+  /* Movie Components */
+  .movie-card {
+    @apply bg-[var(--secondary)] rounded-lg overflow-hidden transition-transform duration-200 hover:scale-105;
+  }
+
+  .movie-poster {
+    @apply w-full h-64 object-cover;
+  }
+
+  .movie-info {
+    @apply p-4;
+  }
+
+  .movie-title {
+    @apply text-xl font-bold mb-2;
+  }
+
+  .movie-rating {
+    @apply text-[var(--accent)] font-semibold;
+  }
+
+  /* Carousel */
+  .carousel {
+    @apply relative overflow-hidden;
+  }
+
+  .carousel-item {
+    @apply transition-transform duration-300;
+  }
+
+  .carousel-control {
+    @apply absolute top-1/2 -translate-y-1/2 bg-[var(--secondary)] bg-opacity-50 p-2 rounded-full hover:bg-opacity-75;
+  }
+
+  /* Seat Selection */
+  .seat-grid {
+    @apply grid gap-2 p-4;
+  }
+
+  .seat {
+    @apply w-8 h-8 rounded-t-lg cursor-pointer transition-colors duration-200;
+  }
+
+  .seat-available {
+    @apply bg-[var(--secondary)] hover:bg-[var(--accent)];
+  }
+
+  .seat-selected {
+    @apply bg-[var(--accent)];
+  }
+
+  .seat-occupied {
+    @apply bg-gray-600 cursor-not-allowed;
+  }
+
+  /* Payment & History */
+  .payment-card {
+    @apply bg-[var(--secondary)] rounded-lg p-6 mb-4;
+  }
+
+  .payment-success {
+    @apply text-[var(--success)] text-center text-2xl font-bold mb-4;
+  }
+
+  .history-item {
+    @apply bg-[var(--secondary)] rounded-lg p-4 mb-4;
+  }
+
+  /* Authentication Pages */
+  .auth-container {
+    @apply max-w-md mx-auto mt-8 p-6 bg-[var(--secondary)] rounded-lg;
+  }
+
+  .auth-title {
+    @apply text-2xl font-bold mb-6 text-center;
+  }
+
+  .auth-link {
+    @apply text-[var(--accent)] hover:underline;
+  }
+
+  /* Movie Detail Page */
+  .movie-detail {
+    @apply grid md:grid-cols-2 gap-8 p-6;
+  }
+
+  .movie-detail-poster {
+    @apply rounded-lg overflow-hidden;
+  }
+
+  .movie-detail-info {
+    @apply space-y-4;
+  }
+
+  .movie-detail-title {
+    @apply text-3xl font-bold;
+  }
+
+  .movie-detail-meta {
+    @apply text-[var(--text-secondary)];
+  }
+
+  .movie-detail-description {
+    @apply text-[var(--text-secondary)] leading-relaxed;
+  }
+} 
