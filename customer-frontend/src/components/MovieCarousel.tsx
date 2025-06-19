@@ -6,9 +6,9 @@ import { Autoplay } from 'swiper/modules';
 import { Link } from 'react-router-dom';
 
 interface Movie {
-  id: string;
-  title: string;
-  posterUrl?: string;
+  MovieID: string;
+  Title: string;
+  PosterURL?: string;
 }
 
 interface MovieCarouselProps {
@@ -38,15 +38,15 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies, promoImage, isLog
         <SwiperSlide key={idx} className="carousel-item">
           <div className="flex flex-col items-center justify-center h-72 bg-[var(--secondary)] rounded-lg relative">
             <img
-              src={slide.posterUrl}
-              alt={slide.type === 'movie' ? slide.title : 'Promo'}
+              src={slide.type === 'movie' ? slide.PosterURL : slide.posterUrl}
+              alt={slide.type === 'movie' ? slide.Title : 'Promo'}
               className="movie-poster h-56 rounded shadow mb-2"
             />
             {slide.type === 'movie' ? (
               <>
-                <div className="movie-title text-xl mb-2">{slide.title}</div>
+                <div className="movie-title text-xl mb-2">{slide.Title}</div>
                 <Link
-                  to={isLoggedIn ? `/movie/${slide.id}` : '/login'}
+                  to={isLoggedIn ? `/movie/${slide.MovieID}` : '/login'}
                   className="btn btn-primary"
                 >
                   Beli Tiket

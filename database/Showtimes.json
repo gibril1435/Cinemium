@@ -1,0 +1,18 @@
+[
+  {
+    "ShowtimeID": 1,
+    "MovieID": 1,
+    "StudioID": 1,
+    "ShowDateTime": "2024-06-19T14:00:00Z",
+    "Price": 50000,
+    "IsActive": true
+  },
+  {
+    "ShowtimeID": 2,
+    "MovieID": 2,
+    "StudioID": 2,
+    "ShowDateTime": "2024-06-19T16:00:00Z",
+    "Price": 60000,
+    "IsActive": true
+  }
+] 

@@ -1,98 +1,143 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { readTable, writeTable } = require('../utils/jsonDb');
+const { authenticate } = require('../middleware/auth');
 
-// Register new user
-router.post('/register', async (req, res) => {
-    try {
-        const { username, password } = req.body;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-        // Check if username already exists
-        const existingUser = await User.findOne({ where: { Username: username } });
-        if (existingUser) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'Username already exists'
-            });
-        }
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Account created successfully
+ *       400:
+ *         description: Username or email already exists or missing fields
+ *       500:
+ *         description: Failed to create account
+ */
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create user
-        await User.create({
-            Username: username,
-            PasswordHash: hashedPassword
-        });
-
-        res.status(201).json({
-            message: 'Account created successfully',
-            redirect: '/login'
-        });
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to create account'
-        });
-    }
+// Register
+router.post('/register', (req, res) => {
+  const { username, email, password, role } = req.body;
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+  const users = readTable('Users');
+  if (users.find(u => u.email === email)) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+  const newId = users.length ? Math.max(...users.map(u => u.UserID)) + 1 : 1;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  const newUser = {
+    UserID: newId,
+    username,
+    email,
+    password: hashedPassword,
+    role: role || 'customer',
+    createdAt: new Date().toISOString()
+  };
+  users.push(newUser);
+  writeTable('Users', users);
+  res.status(201).json({ message: 'User registered successfully', user: { ...newUser, password: undefined } });
 });
 
-// User login
-router.post('/login', async (req, res) => {
-    try {
-        const { username, password, source } = req.body;
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: User login
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Failed to authenticate
+ */
 
-        // Find user
-        const user = await User.findOne({ where: { Username: username } });
-        if (!user) {
-            return res.status(401).json({
-                error: 'Authentication Error',
-                message: 'Invalid credentials'
-            });
-        }
+// Login
+router.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+  const users = readTable('Users');
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  if (!bcrypt.compareSync(password, user.password)) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  const token = jwt.sign({ userId: user.UserID, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { ...user, password: undefined } });
+});
 
-        // Verify password
-        const validPassword = await bcrypt.compare(password, user.PasswordHash);
-        if (!validPassword) {
-            return res.status(401).json({
-                error: 'Authentication Error',
-                message: 'Invalid credentials'
-            });
-        }
+/**
+ * @swagger
+ * /api/auth/user:
+ *   get:
+ *     summary: Get current user info
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ */
 
-        // Update last login
-        await user.update({ LastLoginAt: new Date() });
+// Get current user
+router.get('/me', authenticate, (req, res) => {
+  const users = readTable('Users');
+  const user = users.find(u => u.UserID === req.user.userId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  res.json({ ...user, password: undefined });
+});
 
-        // Generate JWT token
-        const token = jwt.sign(
-            { userId: user.UserID, username: user.Username },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        // Determine redirect path based on source
-        let redirectPath = '/home';
-        if (source === 'movie') {
-            redirectPath = `/movie/${req.query.movieId}`;
-        } else if (source === 'seat') {
-            redirectPath = `/seat/${req.query.showtimeId}`;
-        }
-
-        res.json({
-            token,
-            redirect: redirectPath
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to authenticate'
-        });
-    }
+// Logout (dummy endpoint for frontend compatibility)
+router.post('/logout', (req, res) => {
+  res.json({ message: 'Logged out' });
 });
 
 module.exports = router; 

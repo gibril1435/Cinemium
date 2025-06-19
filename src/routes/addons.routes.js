@@ -1,161 +1,79 @@
 const express = require('express');
 const router = express.Router();
-const { AddOn } = require('../models');
 const { isAdmin } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } = require('date-fns');
+const { readTable, writeTable } = require('../utils/jsonDb');
 
-// Apply admin middleware to all routes
+// Public: Get all add-ons
+router.get('/', (req, res) => {
+  const addons = readTable('AddOns');
+  res.json(addons);
+});
+
+// Apply admin middleware to all routes below
 router.use(isAdmin);
 
-// Get all add-ons
-router.get('/', async (req, res) => {
-    try {
-        const { search, sortBy = 'name', sortOrder = 'ASC' } = req.query;
-        
-        const whereClause = search ? {
-            [Op.or]: [
-                { name: { [Op.like]: `%${search}%` } },
-                { description: { [Op.like]: `%${search}%` } }
-            ]
-        } : {};
+/**
+ * @swagger
+ * tags:
+ *   - name: AddOns
+ *     description: Add-on management (admin only)
+ * /api/admin/addons:
+ *   get:
+ *     summary: Get all add-ons
+ *     tags: [AddOns]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of add-ons
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/AddOn'
+ *       401:
+ *         description: Unauthorized
+ */
 
-        const addOns = await AddOn.findAll({
-            where: whereClause,
-            order: [[sortBy, sortOrder.toUpperCase()]]
-        });
-
-        res.json({ addOns });
-    } catch (error) {
-        console.error('Error fetching add-ons:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch add-ons'
-        });
-    }
+// Get an add-on by ID
+router.get('/:id', (req, res) => {
+  const addons = readTable('AddOns');
+  const addon = addons.find(a => a.AddOnID == req.params.id);
+  if (!addon) return res.status(404).json({ error: 'AddOn not found' });
+  res.json(addon);
 });
 
-// Get add-on by ID
-router.get('/:id', async (req, res) => {
-    try {
-        const addOn = await AddOn.findByPk(req.params.id);
-        
-        if (!addOn) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Add-on not found'
-            });
-        }
-
-        res.json(addOn);
-    } catch (error) {
-        console.error('Error fetching add-on:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch add-on'
-        });
-    }
+// Create a new add-on
+router.post('/', (req, res) => {
+  const addons = readTable('AddOns');
+  const newId = addons.length ? Math.max(...addons.map(a => a.AddOnID)) + 1 : 1;
+  const newAddon = { ...req.body, AddOnID: newId };
+  addons.push(newAddon);
+  writeTable('AddOns', addons);
+  res.status(201).json(newAddon);
 });
 
-// Create new add-on
-router.post('/', async (req, res) => {
-    try {
-        const { name, description, price, stock } = req.body;
-        // Validate required fields
-        if (!name || !price) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'Name and price are required'
-            });
-        }
-        // Check if add-on with same name exists
-        const existingAddOn = await AddOn.findOne({ where: { Name: name } });
-        if (existingAddOn) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'Add-on with this name already exists'
-            });
-        }
-        const addOn = await AddOn.create({
-            Name: name,
-            Description: description,
-            Price: price,
-            Stock: stock || 0
-        });
-        res.status(201).json(addOn);
-    } catch (error) {
-        console.error('Error creating add-on:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to create add-on'
-        });
-    }
+// Update an add-on
+router.put('/:id', (req, res) => {
+  const addons = readTable('AddOns');
+  const idx = addons.findIndex(a => a.AddOnID == req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'AddOn not found' });
+  addons[idx] = { ...addons[idx], ...req.body };
+  writeTable('AddOns', addons);
+  res.json(addons[idx]);
 });
 
-// Update add-on
-router.put('/:id', async (req, res) => {
-    try {
-        const addOn = await AddOn.findByPk(req.params.id);
-        
-        if (!addOn) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Add-on not found'
-            });
-        }
-
-        const { name, description, price, stock, imageUrl } = req.body;
-
-        // Check name uniqueness if name is being changed
-        if (name && name !== addOn.name) {
-            const existingAddOn = await AddOn.findOne({ where: { name } });
-            if (existingAddOn) {
-                return res.status(400).json({
-                    error: 'Validation Error',
-                    message: 'Add-on with this name already exists'
-                });
-            }
-        }
-
-        await addOn.update({
-            name: name || addOn.name,
-            description: description || addOn.description,
-            price: price || addOn.price,
-            stock: stock !== undefined ? stock : addOn.stock,
-            imageUrl: imageUrl || addOn.imageUrl
-        });
-
-        res.json(addOn);
-    } catch (error) {
-        console.error('Error updating add-on:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to update add-on'
-        });
-    }
-});
-
-// Delete add-on
-router.delete('/:id', async (req, res) => {
-    try {
-        const addOn = await AddOn.findByPk(req.params.id);
-        
-        if (!addOn) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Add-on not found'
-            });
-        }
-
-        await addOn.destroy();
-        res.json({ message: 'Add-on deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting add-on:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to delete add-on'
-        });
-    }
+// Delete an add-on
+router.delete('/:id', (req, res) => {
+  let addons = readTable('AddOns');
+  const idx = addons.findIndex(a => a.AddOnID == req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'AddOn not found' });
+  const deleted = addons.splice(idx, 1)[0];
+  writeTable('AddOns', addons);
+  res.json(deleted);
 });
 
 // Update add-on stock

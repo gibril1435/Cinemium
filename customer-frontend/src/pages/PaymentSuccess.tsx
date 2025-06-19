@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import api from '../api';
-import Header from '../components/Header';
 
 interface Booking {
   id: string;
@@ -11,13 +10,14 @@ interface Booking {
   studio?: string;
   qrCodeUrl?: string;
   ticketPdfUrl?: string;
+  totalAmount: number;
+  status: string;
 }
 
 const PaymentSuccess: React.FC = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const bookingId = params.get('bookingId');
-  const navigate = useNavigate();
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,71 +28,41 @@ const PaymentSuccess: React.FC = () => {
     setLoading(true);
     api.get(`/booking/${bookingId}`)
       .then(res => {
+        console.log('Booking details response:', res.data);
         setBooking(res.data);
         setLoading(false);
       })
-      .catch(() => {
+      .catch(err => {
+        console.error('Error fetching booking details:', err);
         setError('Failed to load booking details');
         setLoading(false);
       });
   }, [bookingId]);
-
-  const handleDownloadPDF = async () => {
-    if (!bookingId) return;
-    try {
-      const response = await api.get(`/booking/${bookingId}/ticket-pdf`, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `ticket-${bookingId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      setError('Failed to download ticket');
-    }
-  };
 
   if (loading) return <div className="container p-4">Loading booking details...</div>;
   if (error) return <div className="container p-4 text-[var(--error)]">{error}</div>;
   if (!booking) return <div className="container p-4">Booking not found.</div>;
 
   return (
-    <>
-      <Header />
-      <div className="container">
+    <div className="container p-4">
+      <div className="payment-success">✅ Pembayaran Berhasil!</div>
+      {booking && (
         <div className="payment-card">
-          <h2 className="payment-success">Tiket Anda Berhasil Dibuat!</h2>
-          <div className="bg-[var(--secondary)] rounded-lg p-4 mb-4">
-            <div className="mb-2 font-semibold">Judul Film: {booking.movieTitle}</div>
-            <div className="mb-2 text-[var(--text-secondary)]">Tanggal: {new Date(booking.showtime).toLocaleDateString()}</div>
-            <div className="mb-2 text-[var(--text-secondary)]">Jam Tayang: {new Date(booking.showtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-            <div className="mb-2 text-[var(--text-secondary)]">Studio: {booking.studio || '1'}</div>
-            <div className="mb-2 text-[var(--text-secondary)]">Kursi: {booking.seats.join(', ')}</div>
-            {booking.qrCodeUrl && (
-              <div className="my-4 flex flex-col items-center">
-                <img src={booking.qrCodeUrl} alt="QR Code" className="w-40 h-40 mx-auto" />
-                <div className="text-xs text-[var(--text-secondary)] text-center">[QR Code Tiket]</div>
-              </div>
-            )}
+          <h3 className="text-xl font-bold mb-4">Detail Booking</h3>
+          <div className="space-y-2">
+            <div><strong>Booking ID:</strong> {booking.id}</div>
+            <div><strong>Movie:</strong> {booking.movieTitle}</div>
+            <div><strong>Showtime:</strong> {new Date(booking.showtime).toLocaleString()}</div>
+            <div><strong>Seats:</strong> {booking.seats.join(', ')}</div>
+            <div><strong>Total Amount:</strong> Rp{booking.totalAmount}</div>
+            <div><strong>Status:</strong> <span className="text-[var(--success)]">{booking.status}</span></div>
           </div>
-          <button
-            onClick={handleDownloadPDF}
-            className="btn btn-primary w-full"
-          >
-            Download PDF
-          </button>
-          <button 
-            className="btn btn-secondary w-full mt-4" 
-            onClick={() => navigate('/')}
-          >
-            Kembali ke Home
-          </button>
         </div>
+      )}
+      <div className="text-center">
+        <Link to="/" className="btn btn-primary">Kembali ke Beranda</Link>
       </div>
-    </>
+    </div>
   );
 };
 

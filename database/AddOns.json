@@ -1,0 +1,10 @@
+[
+  {
+    "AddOnID": 1,
+    "name": "Popcorn",
+    "description": "Large popcorn",
+    "price": 25000,
+    "stock": 100,
+    "isActive": true
+  }
+] 

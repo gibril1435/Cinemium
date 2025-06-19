@@ -13,20 +13,27 @@ const Header: React.FC = () => {
   };
 
   return (
-    <nav className="header">
-      <div className="container flex justify-between items-center">
-        <Link to="/" className="flex items-center"><Logo /></Link>
-        <div className="flex space-x-4 items-center">
-          {user && <Link to="/history" className="nav-link">History</Link>}
+    <nav className="bg-gray-900 shadow-lg">
+      <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+        <Link to="/" className="flex items-center">
+          <Logo />
+        </Link>
+        <div className="flex items-center space-x-8">
+          {user && <Link to="/history" className="text-gray-200 hover:text-yellow-400 transition">History</Link>}
           {!user ? (
             <>
-              <Link to="/login" className="nav-link">Login</Link>
-              <Link to="/register" className="nav-link">Register</Link>
+              <Link to="/login" className="text-gray-200 hover:text-yellow-400 transition">Login</Link>
+              <Link to="/register" className="text-gray-200 hover:text-yellow-400 transition">Register</Link>
             </>
           ) : (
             <>
-              <span className="text-[var(--text-secondary)] mr-2">Hi, {user.username}</span>
-              <button className="nav-link" onClick={handleLogout}>Logout</button>
+              <span className="text-gray-200">Hi, <span className="font-semibold">{user.username}</span></span>
+              <button
+                onClick={handleLogout}
+                className="bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded hover:bg-yellow-300 transition"
+              >
+                Logout
+              </button>
             </>
           )}
         </div>

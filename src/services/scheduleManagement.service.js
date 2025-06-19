@@ -1,58 +1,38 @@
-const { Showtime, Movie, Studio } = require('../models');
-const { Op } = require('sequelize');
-const { addMinutes, isBefore, isAfter, parseISO } = require('date-fns');
+const { readTable, writeTable } = require('../utils/jsonDb');
+// Implement file-based schedule management logic or remove this file if not used.
 
 class ScheduleManagementService {
-    async checkStudioAvailability(studioId, startTime, endTime, excludeShowtimeId = null) {
+    checkStudioAvailability(studioId, startTime, endTime, excludeShowtimeId = null) {
         try {
-            const whereClause = {
-                studioId,
-                [Op.or]: [
-                    // Check if new showtime overlaps with existing showtimes
-                    {
-                        showDateTime: {
-                            [Op.between]: [startTime, endTime]
-                        }
-                    },
-                    {
-                        [Op.and]: [
-                            {
-                                showDateTime: {
-                                    [Op.lte]: startTime
-                                }
-                            },
-                            {
-                                endDateTime: {
-                                    [Op.gte]: startTime
-                                }
-                            }
-                        ]
-                    }
-                ]
-            };
-
-            // Exclude current showtime when updating
-            if (excludeShowtimeId) {
-                whereClause.id = {
-                    [Op.ne]: excludeShowtimeId
-                };
-            }
-
-            const conflictingShowtimes = await Showtime.findAll({
-                where: whereClause,
-                include: [{
-                    model: Movie,
-                    attributes: ['title', 'duration']
-                }]
+            const showtimes = readTable('Showtimes');
+            
+            const conflictingShowtimes = showtimes.filter(st => {
+                // Skip if this is the showtime we're excluding (for updates)
+                if (excludeShowtimeId && st.ShowtimeID == excludeShowtimeId) {
+                    return false;
+                }
+                
+                // Check if studio matches
+                if (st.StudioID != studioId) {
+                    return false;
+                }
+                
+                const stStart = new Date(st.ShowDateTime);
+                const stEnd = new Date(st.EndDateTime || st.ShowDateTime);
+                const newStart = new Date(startTime);
+                const newEnd = new Date(endTime);
+                
+                // Check for overlap
+                return (stStart < newEnd && stEnd > newStart);
             });
 
             return {
                 isAvailable: conflictingShowtimes.length === 0,
                 conflicts: conflictingShowtimes.map(st => ({
-                    id: st.id,
-                    movieTitle: st.Movie.title,
-                    startTime: st.showDateTime,
-                    endTime: st.endDateTime
+                    id: st.ShowtimeID,
+                    movieTitle: st.MovieTitle || 'Unknown Movie',
+                    startTime: st.ShowDateTime,
+                    endTime: st.EndDateTime || st.ShowDateTime
                 }))
             };
         } catch (error) {
@@ -61,19 +41,21 @@ class ScheduleManagementService {
         }
     }
 
-    async createShowtime(movieId, studioId, showDateTime) {
+    createShowtime(movieId, studioId, showDateTime) {
         try {
             // Get movie duration
-            const movie = await Movie.findByPk(movieId);
+            const movies = readTable('Movies');
+            const movie = movies.find(m => m.MovieID == movieId);
             if (!movie) {
                 throw new Error('Movie not found');
             }
 
             // Calculate end time (showtime + duration + 30 minutes cleaning time)
-            const endDateTime = addMinutes(showDateTime, movie.duration + 30);
+            const endDateTime = new Date(showDateTime);
+            endDateTime.setMinutes(endDateTime.getMinutes() + (movie.Duration || 120) + 30);
 
             // Check studio availability
-            const availability = await this.checkStudioAvailability(
+            const availability = this.checkStudioAvailability(
                 studioId,
                 showDateTime,
                 endDateTime
@@ -84,39 +66,51 @@ class ScheduleManagementService {
             }
 
             // Create showtime
-            const showtime = await Showtime.create({
-                movieId,
-                studioId,
-                showDateTime,
-                endDateTime
-            });
+            const showtimes = readTable('Showtimes');
+            const newId = showtimes.length ? Math.max(...showtimes.map(s => s.ShowtimeID)) + 1 : 1;
+            const newShowtime = {
+                ShowtimeID: newId,
+                MovieID: movieId,
+                StudioID: studioId,
+                ShowDateTime: showDateTime,
+                EndDateTime: endDateTime,
+                Price: 50000, // Default price
+                IsActive: true
+            };
+            
+            showtimes.push(newShowtime);
+            writeTable('Showtimes', showtimes);
 
-            return showtime;
+            return newShowtime;
         } catch (error) {
             console.error('Error creating showtime:', error);
             throw error;
         }
     }
 
-    async updateShowtime(showtimeId, newShowDateTime) {
+    updateShowtime(showtimeId, newShowDateTime) {
         try {
-            const showtime = await Showtime.findByPk(showtimeId, {
-                include: [{
-                    model: Movie,
-                    attributes: ['duration']
-                }]
-            });
-
+            const showtimes = readTable('Showtimes');
+            const showtime = showtimes.find(s => s.ShowtimeID == showtimeId);
+            
             if (!showtime) {
                 throw new Error('Showtime not found');
             }
 
+            // Get movie duration
+            const movies = readTable('Movies');
+            const movie = movies.find(m => m.MovieID == showtime.MovieID);
+            if (!movie) {
+                throw new Error('Movie not found');
+            }
+
             // Calculate new end time
-            const newEndDateTime = addMinutes(newShowDateTime, showtime.Movie.duration + 30);
+            const newEndDateTime = new Date(newShowDateTime);
+            newEndDateTime.setMinutes(newEndDateTime.getMinutes() + (movie.Duration || 120) + 30);
 
             // Check studio availability
-            const availability = await this.checkStudioAvailability(
-                showtime.studioId,
+            const availability = this.checkStudioAvailability(
+                showtime.StudioID,
                 newShowDateTime,
                 newEndDateTime,
                 showtimeId
@@ -127,64 +121,70 @@ class ScheduleManagementService {
             }
 
             // Update showtime
-            await showtime.update({
-                showDateTime: newShowDateTime,
-                endDateTime: newEndDateTime
-            });
+            const updatedShowtime = {
+                ...showtime,
+                ShowDateTime: newShowDateTime,
+                EndDateTime: newEndDateTime
+            };
+            
+            const updatedShowtimes = showtimes.map(s => 
+                s.ShowtimeID == showtimeId ? updatedShowtime : s
+            );
+            writeTable('Showtimes', updatedShowtimes);
 
-            return showtime;
+            return updatedShowtime;
         } catch (error) {
             console.error('Error updating showtime:', error);
             throw error;
         }
     }
 
-    async getOptimalShowtimes(movieId, studioId, date) {
+    getOptimalShowtimes(movieId, studioId, date) {
         try {
-            const movie = await Movie.findByPk(movieId);
+            const movies = readTable('Movies');
+            const movie = movies.find(m => m.MovieID == movieId);
             if (!movie) {
                 throw new Error('Movie not found');
             }
 
-            const studio = await Studio.findByPk(studioId);
+            const studios = readTable('Studios');
+            const studio = studios.find(s => s.StudioID == studioId);
             if (!studio) {
                 throw new Error('Studio not found');
             }
 
             // Get all showtimes for the studio on the specified date
+            const showtimes = readTable('Showtimes');
             const startOfDay = new Date(date);
             startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date(date);
             endOfDay.setHours(23, 59, 59, 999);
 
-            const existingShowtimes = await Showtime.findAll({
-                where: {
-                    studioId,
-                    showDateTime: {
-                        [Op.between]: [startOfDay, endOfDay]
-                    }
-                },
-                order: [['showDateTime', 'ASC']]
-            });
+            const existingShowtimes = showtimes.filter(st => {
+                if (st.StudioID != studioId) return false;
+                const stDate = new Date(st.ShowDateTime);
+                return stDate >= startOfDay && stDate <= endOfDay;
+            }).sort((a, b) => new Date(a.ShowDateTime) - new Date(b.ShowDateTime));
 
             // Calculate optimal showtimes
-            const movieDuration = movie.duration + 30; // Including cleaning time
+            const movieDuration = (movie.Duration || 120) + 30; // Including cleaning time
             const optimalShowtimes = [];
             let currentTime = new Date(date);
             currentTime.setHours(9, 0, 0, 0); // Start at 9 AM
             const endTime = new Date(date);
             endTime.setHours(22, 0, 0, 0); // End at 10 PM
 
-            while (isBefore(currentTime, endTime)) {
-                const potentialEndTime = addMinutes(currentTime, movieDuration);
+            while (currentTime < endTime) {
+                const potentialEndTime = new Date(currentTime);
+                potentialEndTime.setMinutes(potentialEndTime.getMinutes() + movieDuration);
                 
                 // Check if this time slot is available
                 const isAvailable = !existingShowtimes.some(st => {
-                    const stStart = parseISO(st.showDateTime);
-                    const stEnd = parseISO(st.endDateTime);
+                    const stStart = new Date(st.ShowDateTime);
+                    const stEnd = new Date(st.EndDateTime || st.ShowDateTime);
                     return (
-                        (isAfter(currentTime, stStart) && isBefore(currentTime, stEnd)) ||
-                        (isAfter(potentialEndTime, stStart) && isBefore(potentialEndTime, stEnd))
+                        (currentTime >= stStart && currentTime < stEnd) ||
+                        (potentialEndTime > stStart && potentialEndTime <= stEnd)
                     );
                 });
 
@@ -196,7 +196,7 @@ class ScheduleManagementService {
                 }
 
                 // Move to next potential time slot (every 30 minutes)
-                currentTime = addMinutes(currentTime, 30);
+                currentTime.setMinutes(currentTime.getMinutes() + 30);
             }
 
             return optimalShowtimes;
@@ -206,29 +206,31 @@ class ScheduleManagementService {
         }
     }
 
-    async getStudioSchedule(studioId, startDate, endDate) {
+    getStudioSchedule(studioId, startDate, endDate) {
         try {
-            const schedule = await Showtime.findAll({
-                where: {
-                    studioId,
-                    showDateTime: {
-                        [Op.between]: [startDate, endDate]
-                    }
-                },
-                include: [{
-                    model: Movie,
-                    attributes: ['title', 'duration']
-                }],
-                order: [['showDateTime', 'ASC']]
-            });
+            const showtimes = readTable('Showtimes');
+            const movies = readTable('Movies');
+            
+            const schedule = showtimes
+                .filter(st => st.StudioID == studioId)
+                .filter(st => {
+                    const stDate = new Date(st.ShowDateTime);
+                    return stDate >= new Date(startDate) && stDate <= new Date(endDate);
+                })
+                .map(st => {
+                    const movie = movies.find(m => m.MovieID == st.MovieID);
+                    return {
+                        id: st.ShowtimeID,
+                        movieTitle: movie ? movie.Title : 'Unknown Movie',
+                        showDateTime: st.ShowDateTime,
+                        endDateTime: st.EndDateTime || st.ShowDateTime,
+                        price: st.Price,
+                        isActive: st.IsActive
+                    };
+                })
+                .sort((a, b) => new Date(a.showDateTime) - new Date(b.showDateTime));
 
-            return schedule.map(st => ({
-                id: st.id,
-                movieTitle: st.Movie.title,
-                startTime: st.showDateTime,
-                endTime: st.endDateTime,
-                duration: st.Movie.duration
-            }));
+            return schedule;
         } catch (error) {
             console.error('Error getting studio schedule:', error);
             throw error;

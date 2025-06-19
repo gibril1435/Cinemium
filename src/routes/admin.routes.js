@@ -1,12 +1,45 @@
 const express = require('express');
 const router = express.Router();
-const { Transaction, Showtime, Movie, Ticket, AddOn, TransactionAddOn } = require('../models');
+const { readTable, writeTable } = require('../utils/jsonDb');
 const { Op } = require('sequelize');
 const { isAdmin } = require('../middleware/auth');
 const { startOfDay, endOfDay, startOfWeek, endOfWeek } = require('date-fns');
 
 // Apply admin middleware to all routes
 router.use(isAdmin);
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Admin
+ *     description: Admin operations (bookings, analytics, users, etc.)
+ * /api/admin:
+ *   get:
+ *     summary: Admin dashboard root (protected)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin dashboard info
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/admin/dashboard:
+ *   get:
+ *     summary: Get admin dashboard summary
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard summary
+ *       401:
+ *         description: Unauthorized
+ */
 
 // Get dashboard summary
 router.get('/dashboard', async (req, res) => {

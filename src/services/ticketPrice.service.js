@@ -1,6 +1,5 @@
-const { TicketPrice } = require('../models');
-const { Op } = require('sequelize');
-const { isWeekend, isHoliday } = require('date-fns');
+const { readTable, writeTable } = require('../utils/jsonDb');
+// Implement file-based ticket price logic or remove this file if not used.
 
 class TicketPriceService {
     async getPriceForDate(date) {

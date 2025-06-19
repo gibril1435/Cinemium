@@ -1,83 +1,59 @@
-const { Promotion } = require('../models');
-const { Op } = require('sequelize');
+const { readTable, writeTable } = require('../utils/jsonDb');
 
 // Get all active promotions
-exports.getActivePromotions = async (req, res) => {
-  try {
-    const promotions = await Promotion.findAll({
-      where: {
-        startDate: {
-          [Op.lte]: new Date()
-        },
-        endDate: {
-          [Op.gte]: new Date()
-        },
-        isActive: true
-      }
-    });
-    res.json(promotions);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+exports.getActivePromotions = (req, res) => {
+  const promotions = readTable('Promotions');
+  res.json(promotions);
 };
 
 // Get promotion by ID
-exports.getPromotionById = async (req, res) => {
-  try {
-    const promotion = await Promotion.findByPk(req.params.id);
-    if (!promotion) {
-      return res.status(404).json({ error: 'Promotion not found' });
-    }
-    res.json(promotion);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+exports.getPromotionById = (req, res) => {
+  const promotions = readTable('Promotions');
+  const promotion = promotions.find(p => p.PromotionID === parseInt(req.params.id));
+  if (!promotion) {
+    return res.status(404).json({ error: 'Promotion not found' });
   }
+  res.json(promotion);
 };
 
 // Create new promotion (admin only)
-exports.createPromotion = async (req, res) => {
-  try {
-    const promotion = await Promotion.create(req.body);
-    res.status(201).json(promotion);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+exports.createPromotion = (req, res) => {
+  const promotions = readTable('Promotions');
+  const newId = promotions.length ? Math.max(...promotions.map(p => p.PromotionID)) + 1 : 1;
+  const newPromo = { ...req.body, PromotionID: newId };
+  promotions.push(newPromo);
+  writeTable('Promotions', promotions);
+  res.status(201).json(newPromo);
 };
 
 // Update promotion (admin only)
-exports.updatePromotion = async (req, res) => {
-  try {
-    const promotion = await Promotion.findByPk(req.params.id);
-    if (!promotion) {
-      return res.status(404).json({ error: 'Promotion not found' });
-    }
-    await promotion.update(req.body);
-    res.json(promotion);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+exports.updatePromotion = (req, res) => {
+  const promotions = readTable('Promotions');
+  const promotion = promotions.find(p => p.PromotionID === parseInt(req.params.id));
+  if (!promotion) {
+    return res.status(404).json({ error: 'Promotion not found' });
   }
+  const updatedPromotion = { ...promotion, ...req.body };
+  const index = promotions.findIndex(p => p.PromotionID === parseInt(req.params.id));
+  promotions[index] = updatedPromotion;
+  writeTable('Promotions', promotions);
+  res.json(updatedPromotion);
 };
 
 // Delete promotion (admin only)
-exports.deletePromotion = async (req, res) => {
-  try {
-    const promotion = await Promotion.findByPk(req.params.id);
-    if (!promotion) {
-      return res.status(404).json({ error: 'Promotion not found' });
-    }
-    await promotion.destroy();
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+exports.deletePromotion = (req, res) => {
+  const promotions = readTable('Promotions');
+  const promotion = promotions.find(p => p.PromotionID === parseInt(req.params.id));
+  if (!promotion) {
+    return res.status(404).json({ error: 'Promotion not found' });
   }
+  const filteredPromotions = promotions.filter(p => p.PromotionID !== parseInt(req.params.id));
+  writeTable('Promotions', filteredPromotions);
+  res.status(204).send();
 };
 
 // Get all promotions (admin only)
-exports.getAllPromotions = async (req, res) => {
-  try {
-    const promotions = await Promotion.findAll();
-    res.json(promotions);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+exports.getAllPromotions = (req, res) => {
+  const promotions = readTable('Promotions');
+  res.json(promotions);
 }; 

@@ -1,6 +1,5 @@
-const { Notification } = require('../models');
-const { Op } = require('sequelize');
-const { subDays, subMonths } = require('date-fns');
+const { readTable, writeTable } = require('../utils/jsonDb');
+// Implement file-based notification cleanup logic or remove this file if not used.
 
 class NotificationCleanupService {
     constructor() {

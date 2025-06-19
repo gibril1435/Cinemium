@@ -19,6 +19,7 @@ const ticketPriceRoutes = require('./routes/ticketPrice.routes');
 const scheduleManagementRoutes = require('./routes/scheduleManagement.routes');
 const promotionController = require('./controllers/promotionController');
 const adminPromotionRoutes = require('./routes/admin/promotions.routes');
+const addOnSalesRoutes = require('./routes/admin/addOnSales.routes');
 
 // Import tasks
 const { scheduleCleanup } = require('./tasks/notificationCleanup.task');
@@ -27,9 +28,34 @@ const app = express();
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+app.use(cors({
+  origin: 'http://localhost:3000', // or use your frontend URL
+  credentials: true
+})); // Enable CORS
 app.use(morgan('dev')); // Logging
 app.use(express.json()); // Parse JSON bodies
+
+// Swagger setup
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Cinemium API',
+      version: '1.0.0',
+      description: 'API documentation for Cinemium backend',
+    },
+    servers: [
+      { url: `http://localhost:${process.env.PORT || 3000}` }
+    ],
+  },
+  apis: ['./src/routes/*.js', './src/routes/admin/*.js'], // You can add more paths if needed
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -51,6 +77,7 @@ app.use('/api/admin/studios', studiosRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin/prices', ticketPriceRoutes);
 app.use('/api/admin/schedule', scheduleManagementRoutes);
+app.use('/api/admin/addon-sales', addOnSalesRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

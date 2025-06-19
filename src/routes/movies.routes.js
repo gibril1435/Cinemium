@@ -1,203 +1,252 @@
 const express = require('express');
 const router = express.Router();
-const { Movie, Showtime } = require('../models');
-const { Op } = require('sequelize');
 const { isAdmin } = require('../middleware/auth');
+const { readTable, writeTable } = require('../utils/jsonDb');
 
-// Get currently showing movies
-router.get('/now-showing', async (req, res) => {
-    try {
-        const { search } = req.query;
-        const whereClause = search ? {
-            Title: {
-                [Op.like]: `%${search}%`
-            }
-        } : {};
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Movie:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         title:
+ *           type: string
+ *         genre:
+ *           type: string
+ *         synopsis:
+ *           type: string
+ *         posterUrl:
+ *           type: string
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         username:
+ *           type: string
+ *         isAdmin:
+ *           type: boolean
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         lastLoginAt:
+ *           type: string
+ *           format: date-time
+ *     Booking:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         userId:
+ *           type: integer
+ *         showtimeId:
+ *           type: integer
+ *         bookingDateTime:
+ *           type: string
+ *           format: date-time
+ *         totalAmount:
+ *           type: number
+ *         status:
+ *           type: string
+ *     BookingSeat:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         bookingId:
+ *           type: integer
+ *         seatId:
+ *           type: integer
+ *     AddOn:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         price:
+ *           type: number
+ *         stock:
+ *           type: integer
+ *         isActive:
+ *           type: boolean
+ *     AddOnSale:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         bookingId:
+ *           type: integer
+ *         addOnId:
+ *           type: integer
+ *         quantity:
+ *           type: integer
+ *         unitPrice:
+ *           type: number
+ *     Promotion:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         imageUrl:
+ *           type: string
+ *         startDate:
+ *           type: string
+ *           format: date-time
+ *         endDate:
+ *           type: string
+ *           format: date-time
+ *     Seat:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         studioId:
+ *           type: integer
+ *         seatNumber:
+ *           type: string
+ *         rowNumber:
+ *           type: string
+ *         isActive:
+ *           type: boolean
+ *     Showtime:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         movieId:
+ *           type: integer
+ *         studioId:
+ *           type: integer
+ *         showDateTime:
+ *           type: string
+ *           format: date-time
+ *         price:
+ *           type: number
+ *         isActive:
+ *           type: boolean
+ *     Studio:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         studioNumber:
+ *           type: integer
+ *         capacity:
+ *           type: integer
+ *         isActive:
+ *           type: boolean
+ *     Notification:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         userId:
+ *           type: integer
+ *         type:
+ *           type: string
+ *         title:
+ *           type: string
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *         read:
+ *           type: boolean
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *     TicketPrice:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         type:
+ *           type: string
+ *         price:
+ *           type: number
+ *         startDate:
+ *           type: string
+ *           format: date-time
+ *         endDate:
+ *           type: string
+ *           format: date-time
+ *         dayOfWeek:
+ *           type: integer
+ *         isHoliday:
+ *           type: boolean
+ *         description:
+ *           type: string
+ *
+ * @swagger
+ * /api/movies:
+ *   get:
+ *     summary: Get all movies
+ *     tags: [Movies]
+ *     responses:
+ *       200:
+ *         description: List of all movies
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Movie'
+ */
 
-        const movies = await Movie.findAll({
-            where: whereClause,
-            include: [{
-                model: Showtime,
-                where: {
-                    ShowDateTime: {
-                        [Op.gte]: new Date()
-                    }
-                },
-                required: true
-            }],
-            attributes: ['MovieID', 'Title', 'Genre', 'PosterURL']
-        });
-
-        const formattedMovies = movies.map(movie => ({
-            id: movie.MovieID,
-            title: movie.Title,
-            genre: movie.Genre,
-            posterUrl: movie.PosterURL,
-            showtimes: movie.Showtimes.map(showtime => ({
-                time: showtime.ShowDateTime,
-                price: showtime.Price
-            }))
-        }));
-
-        res.json({ movies: formattedMovies });
-    } catch (error) {
-        console.error('Error fetching movies:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch movies'
-        });
-    }
+// Public routes (no authentication required)
+// Get all movies
+router.get('/', (req, res) => {
+  const movies = readTable('Movies');
+  res.json(movies);
 });
 
-// Get movie details
-router.get('/:id', async (req, res) => {
-    try {
-        const movie = await Movie.findByPk(req.params.id, {
-            include: [
-                {
-                    model: Showtime,
-                    where: {
-                        ShowDateTime: {
-                            [Op.gte]: new Date()
-                        }
-                    },
-                    required: false
-                }
-            ]
-        });
-
-        if (!movie) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Movie not found'
-            });
-        }
-
-        res.json({
-            id: movie.MovieID,
-            title: movie.Title,
-            synopsis: movie.Synopsis,
-            genre: movie.Genre,
-            director: movie.Director,
-            productionHouse: movie.ProductionHouse,
-            posterUrl: movie.PosterURL,
-            actors: movie.Actors ? movie.Actors.split(',').map(a => a.trim()) : [],
-            showtimes: movie.Showtimes.map(showtime => ({
-                id: showtime.ShowtimeID,
-                time: showtime.ShowDateTime,
-                studio: showtime.StudioID,
-                price: showtime.Price
-            }))
-        });
-    } catch (error) {
-        console.error('Error fetching movie details:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch movie details'
-        });
-    }
+// Get a movie by ID
+router.get('/:id', (req, res) => {
+  const movies = readTable('Movies');
+  const movie = movies.find(m => m.MovieID == req.params.id);
+  if (!movie) return res.status(404).json({ error: 'Movie not found' });
+  res.json(movie);
 });
 
-// Admin routes
-router.use(isAdmin);
-
-// Create movie
-router.post('/', async (req, res) => {
-    try {
-        const {
-            title,
-            synopsis,
-            genre,
-            director,
-            productionHouse,
-            posterUrl,
-            actors,
-            duration
-        } = req.body;
-
-        const movie = await Movie.create({
-            Title: title,
-            Synopsis: synopsis,
-            Genre: genre,
-            Director: director,
-            ProductionHouse: productionHouse,
-            PosterURL: posterUrl,
-            Actors: actors ? actors.join(', ') : '',
-            Duration: duration
-        });
-
-        res.status(201).json(movie);
-    } catch (error) {
-        console.error('Error creating movie:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to create movie'
-        });
-    }
+// Admin routes (authentication required)
+// Create a new movie
+router.post('/', isAdmin, (req, res) => {
+  const movies = readTable('Movies');
+  const newId = movies.length ? Math.max(...movies.map(m => m.MovieID)) + 1 : 1;
+  const newMovie = { ...req.body, MovieID: newId };
+  movies.push(newMovie);
+  writeTable('Movies', movies);
+  res.status(201).json(newMovie);
 });
 
-// Update movie
-router.put('/:id', async (req, res) => {
-    try {
-        const movie = await Movie.findByPk(req.params.id);
-        if (!movie) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Movie not found'
-            });
-        }
-
-        const {
-            title,
-            synopsis,
-            genre,
-            director,
-            productionHouse,
-            posterUrl,
-            actors,
-            duration
-        } = req.body;
-
-        await movie.update({
-            Title: title,
-            Synopsis: synopsis,
-            Genre: genre,
-            Director: director,
-            ProductionHouse: productionHouse,
-            PosterURL: posterUrl,
-            Actors: actors ? actors.join(', ') : '',
-            Duration: duration
-        });
-
-        res.json(movie);
-    } catch (error) {
-        console.error('Error updating movie:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to update movie'
-        });
-    }
+// Update a movie
+router.put('/:id', isAdmin, (req, res) => {
+  const movies = readTable('Movies');
+  const idx = movies.findIndex(m => m.MovieID == req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
+  movies[idx] = { ...movies[idx], ...req.body };
+  writeTable('Movies', movies);
+  res.json(movies[idx]);
 });
 
-// Delete movie
-router.delete('/:id', async (req, res) => {
-    try {
-        const movie = await Movie.findByPk(req.params.id);
-        if (!movie) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Movie not found'
-            });
-        }
-        await movie.destroy();
-        res.json({ message: 'Movie deleted' });
-    } catch (error) {
-        console.error('Error deleting movie:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to delete movie'
-        });
-    }
+// Delete a movie
+router.delete('/:id', isAdmin, (req, res) => {
+  let movies = readTable('Movies');
+  const idx = movies.findIndex(m => m.MovieID == req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
+  const deleted = movies.splice(idx, 1)[0];
+  writeTable('Movies', movies);
+  res.json(deleted);
 });
 
 module.exports = router; 

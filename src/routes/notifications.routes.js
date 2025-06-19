@@ -1,253 +1,346 @@
 const express = require('express');
 const router = express.Router();
-const { Notification, User, Transaction, Ticket } = require('../models');
+const { readTable, writeTable } = require('../utils/jsonDb');
 const { authenticate, isAdmin } = require('../middleware/auth');
-const { Op } = require('sequelize');
 
 // Apply authentication middleware to all routes
 router.use(authenticate);
 
+/**
+ * @swagger
+ * /api/notifications:
+ *   get:
+ *     summary: Get user's notifications
+ *     tags:
+ *       - Notifications
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of notifications per page
+ *       - in: query
+ *         name: unreadOnly
+ *         schema:
+ *           type: boolean
+ *         description: Only unread notifications
+ *     responses:
+ *       200:
+ *         description: List of notifications
+ *       500:
+ *         description: Failed to fetch notifications
+ */
+
 // Get user's notifications
-router.get('/', async (req, res) => {
-    try {
-        const { page = 1, limit = 10, unreadOnly = false } = req.query;
-        const offset = (page - 1) * limit;
-
-        const whereClause = {
-            userId: req.user.id
-        };
-
-        if (unreadOnly === 'true') {
-            whereClause.read = false;
-        }
-
-        const notifications = await Notification.findAndCountAll({
-            where: whereClause,
-            order: [['createdAt', 'DESC']],
-            limit: parseInt(limit),
-            offset: parseInt(offset)
-        });
-
-        res.json({
-            notifications: notifications.rows,
-            total: notifications.count,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(notifications.count / limit)
-        });
-    } catch (error) {
-        console.error('Error fetching notifications:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch notifications'
-        });
+router.get('/', (req, res) => {
+  try {
+    const { page = 1, limit = 10, unreadOnly = false } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let notifications = readTable('Notifications');
+    
+    // Filter by user ID
+    notifications = notifications.filter(n => n.userId == req.user.id);
+    
+    // Filter unread only if requested
+    if (unreadOnly === 'true') {
+      notifications = notifications.filter(n => !n.read);
     }
+    
+    // Sort by createdAt descending
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const total = notifications.length;
+    const paginatedNotifications = notifications.slice(offset, offset + parseInt(limit));
+    
+    res.json({
+      notifications: paginatedNotifications,
+      total,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch notifications'
+    });
+  }
+});
+
+// Get a notification by ID
+router.get('/:id', (req, res) => {
+  try {
+    const notifications = readTable('Notifications');
+    const notification = notifications.find(n => n.id == req.params.id && n.userId == req.user.id);
+    
+    if (!notification) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Notification not found'
+      });
+    }
+    
+    res.json(notification);
+  } catch (error) {
+    console.error('Error fetching notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch notification'
+    });
+  }
+});
+
+// Create a new notification
+router.post('/', (req, res) => {
+  try {
+    const notifications = readTable('Notifications');
+    const newId = notifications.length ? Math.max(...notifications.map(n => n.id)) + 1 : 1;
+    const newNotification = {
+      ...req.body,
+      id: newId,
+      userId: req.user.id,
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+    
+    notifications.push(newNotification);
+    writeTable('Notifications', notifications);
+    res.status(201).json(newNotification);
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to create notification'
+    });
+  }
+});
+
+// Update a notification
+router.put('/:id', (req, res) => {
+  try {
+    const notifications = readTable('Notifications');
+    const idx = notifications.findIndex(n => n.id == req.params.id && n.userId == req.user.id);
+    
+    if (idx === -1) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Notification not found'
+      });
+    }
+    
+    notifications[idx] = { ...notifications[idx], ...req.body };
+    writeTable('Notifications', notifications);
+    res.json(notifications[idx]);
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to update notification'
+    });
+  }
 });
 
 // Mark notification as read
-router.patch('/:id/read', async (req, res) => {
-    try {
-        const notification = await Notification.findOne({
-            where: {
-                id: req.params.id,
-                userId: req.user.id
-            }
-        });
-
-        if (!notification) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Notification not found'
-            });
-        }
-
-        await notification.update({ read: true });
-        res.json(notification);
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to mark notification as read'
-        });
+router.patch('/:id/read', (req, res) => {
+  try {
+    const notifications = readTable('Notifications');
+    const idx = notifications.findIndex(n => n.id == req.params.id && n.userId == req.user.id);
+    
+    if (idx === -1) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Notification not found'
+      });
     }
+    
+    notifications[idx].read = true;
+    writeTable('Notifications', notifications);
+    res.json(notifications[idx]);
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to mark notification as read'
+    });
+  }
 });
 
 // Mark all notifications as read
-router.patch('/read-all', async (req, res) => {
-    try {
-        await Notification.update(
-            { read: true },
-            {
-                where: {
-                    userId: req.user.id,
-                    read: false
-                }
-            }
-        );
-
-        res.json({ message: 'All notifications marked as read' });
-    } catch (error) {
-        console.error('Error marking all notifications as read:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to mark all notifications as read'
-        });
-    }
+router.patch('/read-all', (req, res) => {
+  try {
+    const notifications = readTable('Notifications');
+    const updated = notifications.map(n => 
+      n.userId == req.user.id && !n.read ? { ...n, read: true } : n
+    );
+    
+    writeTable('Notifications', updated);
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to mark all notifications as read'
+    });
+  }
 });
 
-// Delete notification
-router.delete('/:id', async (req, res) => {
-    try {
-        const notification = await Notification.findOne({
-            where: {
-                id: req.params.id,
-                userId: req.user.id
-            }
-        });
-
-        if (!notification) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Notification not found'
-            });
-        }
-
-        await notification.destroy();
-        res.json({ message: 'Notification deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting notification:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to delete notification'
-        });
+// Delete a notification
+router.delete('/:id', (req, res) => {
+  try {
+    let notifications = readTable('Notifications');
+    const idx = notifications.findIndex(n => n.id == req.params.id && n.userId == req.user.id);
+    
+    if (idx === -1) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Notification not found'
+      });
     }
+    
+    const deleted = notifications.splice(idx, 1)[0];
+    writeTable('Notifications', notifications);
+    res.json({ message: 'Notification deleted successfully', deleted });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to delete notification'
+    });
+  }
 });
 
 // Admin routes
 router.use('/admin', isAdmin);
 
 // Get all notifications (admin only)
-router.get('/admin', async (req, res) => {
-    try {
-        const { page = 1, limit = 10, userId, type } = req.query;
-        const offset = (page - 1) * limit;
-
-        const whereClause = {};
-        if (userId) whereClause.userId = userId;
-        if (type) whereClause.type = type;
-
-        const notifications = await Notification.findAndCountAll({
-            where: whereClause,
-            include: [{ model: User, attributes: ['username', 'email'] }],
-            order: [['createdAt', 'DESC']],
-            limit: parseInt(limit),
-            offset: parseInt(offset)
-        });
-
-        res.json({
-            notifications: notifications.rows,
-            total: notifications.count,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(notifications.count / limit)
-        });
-    } catch (error) {
-        console.error('Error fetching all notifications:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch all notifications'
-        });
+router.get('/admin', (req, res) => {
+  try {
+    const { page = 1, limit = 10, userId, type } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let notifications = readTable('Notifications');
+    
+    // Apply filters
+    if (userId) {
+      notifications = notifications.filter(n => n.userId == userId);
     }
+    if (type) {
+      notifications = notifications.filter(n => n.type === type);
+    }
+    
+    // Sort by createdAt descending
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const total = notifications.length;
+    const paginatedNotifications = notifications.slice(offset, offset + parseInt(limit));
+    
+    res.json({
+      notifications: paginatedNotifications,
+      total,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching all notifications:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch all notifications'
+    });
+  }
 });
 
 // Create notification (admin only)
-router.post('/admin', async (req, res) => {
-    try {
-        const { userId, type, title, message, data } = req.body;
-
-        // Validate required fields
-        if (!userId || !type || !title || !message) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'userId, type, title, and message are required'
-            });
-        }
-
-        // Check if user exists
-        const user = await User.findByPk(userId);
-        if (!user) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'User not found'
-            });
-        }
-
-        const notification = await Notification.create({
-            userId,
-            type,
-            title,
-            message,
-            data: data || {}
-        });
-
-        res.status(201).json(notification);
-    } catch (error) {
-        console.error('Error creating notification:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to create notification'
-        });
+router.post('/admin', (req, res) => {
+  try {
+    const { userId, type, title, message, data } = req.body;
+    
+    // Validate required fields
+    if (!userId || !type || !title || !message) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'userId, type, title, and message are required'
+      });
     }
+    
+    const notifications = readTable('Notifications');
+    const newId = notifications.length ? Math.max(...notifications.map(n => n.id)) + 1 : 1;
+    const newNotification = {
+      id: newId,
+      userId,
+      type,
+      title,
+      message,
+      data: data || {},
+      read: false,
+      createdAt: new Date().toISOString()
+    };
+    
+    notifications.push(newNotification);
+    writeTable('Notifications', notifications);
+    res.status(201).json(newNotification);
+  } catch (error) {
+    console.error('Error creating admin notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to create notification'
+    });
+  }
 });
 
-// Create bulk notifications (admin only)
-router.post('/admin/bulk', async (req, res) => {
-    try {
-        const { notifications } = req.body;
-
-        if (!Array.isArray(notifications)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'notifications must be an array'
-            });
-        }
-
-        // Validate each notification
-        for (const notification of notifications) {
-            if (!notification.userId || !notification.type || !notification.title || !notification.message) {
-                return res.status(400).json({
-                    error: 'Validation Error',
-                    message: 'Each notification must have userId, type, title, and message'
-                });
-            }
-        }
-
-        // Check if all users exist
-        const userIds = [...new Set(notifications.map(n => n.userId))];
-        const users = await User.findAll({
-            where: { id: { [Op.in]: userIds } }
-        });
-
-        if (users.length !== userIds.length) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'One or more users not found'
-            });
-        }
-
-        const createdNotifications = await Notification.bulkCreate(
-            notifications.map(n => ({
-                ...n,
-                data: n.data || {}
-            }))
-        );
-
-        res.status(201).json({ notifications: createdNotifications });
-    } catch (error) {
-        console.error('Error creating bulk notifications:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to create bulk notifications'
-        });
+// Update notification (admin only)
+router.put('/admin/:id', (req, res) => {
+  try {
+    const notifications = readTable('Notifications');
+    const idx = notifications.findIndex(n => n.id == req.params.id);
+    
+    if (idx === -1) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Notification not found'
+      });
     }
+    
+    notifications[idx] = { ...notifications[idx], ...req.body };
+    writeTable('Notifications', notifications);
+    res.json(notifications[idx]);
+  } catch (error) {
+    console.error('Error updating admin notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to update notification'
+    });
+  }
+});
+
+// Delete notification (admin only)
+router.delete('/admin/:id', (req, res) => {
+  try {
+    let notifications = readTable('Notifications');
+    const idx = notifications.findIndex(n => n.id == req.params.id);
+    
+    if (idx === -1) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Notification not found'
+      });
+    }
+    
+    const deleted = notifications.splice(idx, 1)[0];
+    writeTable('Notifications', notifications);
+    res.json({ message: 'Notification deleted successfully', deleted });
+  } catch (error) {
+    console.error('Error deleting admin notification:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to delete notification'
+    });
+  }
 });
 
 module.exports = router; 

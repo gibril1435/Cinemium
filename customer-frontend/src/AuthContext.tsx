@@ -4,7 +4,7 @@ import api from './api';
 interface AuthContextType {
   user: any;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -30,15 +30,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    await api.post('/auth/login', { email, password });
-    const res = await api.get('/auth/me');
-    setUser(res.data);
+    const res = await api.post('/auth/login', { email, password });
+    const { token, user } = res.data;
+    localStorage.setItem('token', token);
+    setUser(user);
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    await api.post('/auth/register', { name, email, password });
-    const res = await api.get('/auth/me');
-    setUser(res.data);
+  const register = async (username: string, email: string, password: string) => {
+    await api.post('/auth/register', { username, email, password });
+    // Do not fetch /auth/me or setUser here, as registration does not log in the user.
   };
 
   const logout = async () => {
