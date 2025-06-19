@@ -108,20 +108,75 @@
     @apply grid gap-2 p-4;
   }
 
-  .seat {
-    @apply w-8 h-8 rounded-t-lg cursor-pointer transition-colors duration-200;
+  .seat-btn {
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 0 0 1rem 1rem;
+    margin: 0 0.25rem;
+    background: #374151;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: none;
+    padding: 0;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    position: relative;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
+    vertical-align: middle;
   }
 
-  .seat-available {
-    @apply bg-[var(--secondary)] hover:bg-[var(--accent)];
+  .seat-btn.seat-available:hover {
+    background: #facc15; /* yellow-400 */
+    color: #222;
+    box-shadow: 0 4px 12px rgba(250,204,21,0.25);
   }
 
+  .seat-btn.seat-selected {
+    background: #facc15; /* yellow-400 */
+    color: #222;
+    border: 2px solid #fde047; /* yellow-300 */
+  }
+
+  .seat-btn.seat-occupied {
+    background: #6b7280; /* gray-500 */
+    color: #bbb;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .seat-check {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.9em;
+    color: #16a34a; /* green-600 */
+    pointer-events: none;
+  }
+
+  /* Legend icons reuse seat styles for consistency */
   .seat-selected {
-    @apply bg-[var(--accent)];
+    background: #facc15 !important;
+    border: 2px solid #fde047 !important;
+    color: #222 !important;
+    border-radius: 0 0 1rem 1rem;
   }
 
   .seat-occupied {
-    @apply bg-gray-600 cursor-not-allowed;
+    background: #6b7280 !important;
+    color: #bbb !important;
+    opacity: 0.6 !important;
+    border-radius: 0 0 1rem 1rem;
+  }
+
+  .seat-available {
+    background: #374151 !important;
+    color: #fff !important;
+    border-radius: 0 0 1rem 1rem;
   }
 
   /* Payment & History */

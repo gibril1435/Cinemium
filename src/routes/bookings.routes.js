@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 // Get a booking by ID
 router.get('/:id', (req, res) => {
   const bookings = readTable('Bookings');
-  const booking = bookings.find(b => b.BookingID == req.params.id);
+  const booking = bookings.find(b => b.bookingId == req.params.id);
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
   res.json(booking);
 });
@@ -19,8 +19,8 @@ router.get('/:id', (req, res) => {
 // Create a new booking
 router.post('/', (req, res) => {
   const bookings = readTable('Bookings');
-  const newId = bookings.length ? Math.max(...bookings.map(b => b.BookingID)) + 1 : 1;
-  const newBooking = { ...req.body, BookingID: newId };
+  const newId = bookings.length ? Math.max(...bookings.map(b => b.bookingId)) + 1 : 1;
+  const newBooking = { ...req.body, bookingId: newId };
   bookings.push(newBooking);
   writeTable('Bookings', bookings);
   res.status(201).json(newBooking);
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
 // Update a booking
 router.put('/:id', (req, res) => {
   const bookings = readTable('Bookings');
-  const idx = bookings.findIndex(b => b.BookingID == req.params.id);
+  const idx = bookings.findIndex(b => b.bookingId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Booking not found' });
   bookings[idx] = { ...bookings[idx], ...req.body };
   writeTable('Bookings', bookings);
@@ -39,7 +39,7 @@ router.put('/:id', (req, res) => {
 // Delete a booking
 router.delete('/:id', (req, res) => {
   let bookings = readTable('Bookings');
-  const idx = bookings.findIndex(b => b.BookingID == req.params.id);
+  const idx = bookings.findIndex(b => b.bookingId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Booking not found' });
   const deleted = bookings.splice(idx, 1)[0];
   writeTable('Bookings', bookings);

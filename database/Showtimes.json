@@ -1,18 +1,18 @@
 [
   {
-    "ShowtimeID": 1,
-    "MovieID": 1,
-    "StudioID": 1,
-    "ShowDateTime": "2024-06-19T14:00:00Z",
-    "Price": 50000,
-    "IsActive": true
+    "showtimeId": 1,
+    "movieId": 1,
+    "studioId": 1,
+    "showDateTime": "2024-06-19T14:00:00Z",
+    "price": 50000,
+    "isActive": true
   },
   {
-    "ShowtimeID": 2,
-    "MovieID": 2,
-    "StudioID": 2,
-    "ShowDateTime": "2024-06-19T16:00:00Z",
-    "Price": 60000,
-    "IsActive": true
+    "showtimeId": 2,
+    "movieId": 2,
+    "studioId": 2,
+    "showDateTime": "2024-06-19T16:00:00Z",
+    "price": 60000,
+    "isActive": true
   }
 ] 

@@ -33,6 +33,7 @@ const SeatOrder: React.FC = () => {
   const [showtime, setShowtime] = useState('');
   const [addOns, setAddOns] = useState<AddOn[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<{ [id: number]: number }>({});
+  const [notification, setNotification] = useState<string | null>(null);
 
   const ROWS = 5;
   const COLS = 8;
@@ -56,13 +57,13 @@ const SeatOrder: React.FC = () => {
     if (movieId) {
       api.get(`/movies/${movieId}`).then(res => {
         console.log('Movie detail response:', res.data);
-        setMovieTitle(res.data.Title || res.data.title);
+        setMovieTitle(res.data.title);
       });
     }
     if (showtimeId) {
       api.get(`/booking/showtimes/${showtimeId}`).then(res => {
         console.log('Showtime detail response:', res.data);
-        setShowtime(res.data.ShowDateTime || res.data.showDateTime || res.data.time);
+        setShowtime(res.data.showDateTime || res.data.time);
       });
     }
     // Fetch add-ons
@@ -81,7 +82,8 @@ const SeatOrder: React.FC = () => {
       } else if (seats.length < 4) {
         return [...seats, seatId];
       } else {
-        setError('Maximum 4 seats per transaction');
+        setNotification('Maximum 4 seats per transaction');
+        setTimeout(() => setNotification(null), 3000);
         return seats;
       }
     });
@@ -100,7 +102,8 @@ const SeatOrder: React.FC = () => {
       return;
     }
     if (selectedSeats.length > 4) {
-      setError('Maximum 4 seats per transaction');
+      setNotification('Maximum 4 seats per transaction');
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
     setPaying(true);
@@ -108,12 +111,12 @@ const SeatOrder: React.FC = () => {
       const addOnsToSend = Object.entries(selectedAddOns)
         .filter(([_, qty]) => qty > 0)
         .map(([id, qty]) => ({ id: Number(id), quantity: qty }));
-      const res = await api.post('/booking', {
+      const res = await api.post('/booking/transactions', {
         showtimeId,
-        seatIds: selectedSeats,
+        seats: selectedSeats,
         addOns: addOnsToSend,
       });
-      navigate(`/payment-success?bookingId=${res.data.id}`);
+      navigate(`/payment-success?bookingId=${res.data.booking.bookingId}`);
     } catch (err) {
       setError('Payment failed. Please try again.');
     } finally {
@@ -126,19 +129,30 @@ const SeatOrder: React.FC = () => {
 
   return (
     <div className="container">
+      {notification && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50 animate-fade-in-out">
+          {notification}
+        </div>
+      )}
       <h2 className="text-xl font-bold mb-2">Pilih Kursi - {movieTitle} - Jam: {showtime ? new Date(showtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</h2>
       <div className="mb-2 text-center font-mono text-[var(--text-secondary)]">LAYAR</div>
       <div className="flex flex-col items-center mb-2">
         {/* Column labels */}
-        <div className="flex mb-1 ml-8">
-          <div className="w-6" />
+        <div className="flex mb-2 justify-center">
+          <div className="w-8" /> {/* Placeholder for row label */}
           {[...Array(COLS)].map((_, i) => (
-            <div key={i} className="w-10 text-center font-bold">{i + 1}</div>
+            <div
+              key={i}
+              className="seat-btn font-bold flex items-center justify-center"
+              style={{ pointerEvents: 'none', background: 'transparent', color: '#fff', boxShadow: 'none' }}
+            >
+              {i + 1}
+            </div>
           ))}
         </div>
         {/* Seat grid */}
         {Array.from({ length: ROWS }).map((_, rowIdx) => (
-          <div key={rowIdx} className="flex items-center mb-1">
+          <div key={rowIdx} className="flex items-center mb-2">
             <div className="w-6 text-center font-bold">{ROW_LABELS[rowIdx]}</div>
             {Array.from({ length: COLS }).map((_, colIdx) => {
               const seat = seats.find(s => s.label === `${ROW_LABELS[rowIdx]}${colIdx + 1}`);
@@ -147,7 +161,9 @@ const SeatOrder: React.FC = () => {
                   key={seat.id}
                   disabled={!seat.available}
                   onClick={() => toggleSeat(seat.id)}
-                  className={`seat ${!seat.available ? 'seat-occupied' : selectedSeats.includes(seat.id) ? 'seat-selected' : 'seat-available'}`}
+                  className={`seat-btn ${!seat.available ? 'seat-occupied' : selectedSeats.includes(seat.id) ? 'seat-selected' : 'seat-available'}`}
+                  title={seat.label}
+                  aria-label={`Seat ${seat.label}${seat.available ? '' : ' (unavailable)'}`}
                 >
                   {colIdx + 1}
                 </button>
@@ -159,10 +175,10 @@ const SeatOrder: React.FC = () => {
         ))}
       </div>
       {/* Legend */}
-      <div className="flex gap-4 mb-4 text-sm">
-        <div><span className="inline-block w-4 h-4 bg-[var(--accent)] mr-1 rounded align-middle" /> Dipilih</div>
-        <div><span className="inline-block w-4 h-4 bg-gray-600 mr-1 rounded align-middle" /> Dipesan</div>
-        <div><span className="inline-block w-4 h-4 bg-[var(--secondary)] border mr-1 rounded align-middle" /> Kosong</div>
+      <div className="flex gap-4 mb-4 text-sm justify-center">
+        <div className="flex items-center"><span className="inline-block w-5 h-5 seat-selected mr-1" /> Dipilih</div>
+        <div className="flex items-center"><span className="inline-block w-5 h-5 seat-occupied mr-1" /> Dipesan</div>
+        <div className="flex items-center"><span className="inline-block w-5 h-5 seat-available mr-1" /> Kosong</div>
       </div>
       {/* Add-on Selection */}
       {addOns.length > 0 && (

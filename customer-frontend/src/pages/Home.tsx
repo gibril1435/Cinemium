@@ -5,27 +5,27 @@ import { useAuth } from '../AuthContext';
 import MovieCarousel from '../components/MovieCarousel';
 
 type Movie = {
-  MovieID: string;
-  Title: string;
-  Genre: string;
-  Synopsis: string;
-  PosterURL?: string;
-  Director?: string;
-  Actors?: string;
-  ProductionHouse?: string;
-  Duration?: number;
-  IsActive?: boolean;
+  movieId: string;
+  title: string;
+  genre: string;
+  synopsis: string;
+  posterUrl?: string;
+  director?: string;
+  actors?: string;
+  productionHouse?: string;
+  duration?: number;
+  isActive?: boolean;
 };
 
 type Promotion = {
-  PromotionID: string;
-  Title: string;
-  Description: string;
-  ImageUrl: string;
-  StartDate: string;
-  EndDate: string;
-  DiscountPercentage?: number;
-  IsActive?: boolean;
+  promotionId: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  startDate: string;
+  endDate: string;
+  discountPercentage?: number;
+  isActive?: boolean;
 };
 
 const Home: React.FC = () => {
@@ -79,11 +79,11 @@ const Home: React.FC = () => {
 
   // Filter movies by search
   const filteredMovies = (movies || []).filter(
-    movie => typeof movie.Title === 'string' && movie.Title.toLowerCase().includes((search || '').toLowerCase())
+    movie => typeof movie.title === 'string' && movie.title.toLowerCase().includes((search || '').toLowerCase())
   );
 
   // Use the first promotion image or a default one
-  const promoImage = promotions.length > 0 ? promotions[0].ImageUrl : 'https://images.unsplash.com/photo-1517602302552-471fe67acf66?auto=format&fit=crop&w=600&q=80';
+  const promoImage = promotions.length > 0 ? promotions[0].imageUrl : 'https://images.unsplash.com/photo-1517602302552-471fe67acf66?auto=format&fit=crop&w=600&q=80';
 
   return (
     <>
@@ -101,14 +101,14 @@ const Home: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {filteredMovies.map(movie => (
-            <div key={movie.MovieID} className="movie-card">
-              {movie.PosterURL && <img src={movie.PosterURL} alt={movie.Title} className="movie-poster" />}
+            <div key={movie.movieId} className="movie-card">
+              {movie.posterUrl && <img src={movie.posterUrl} alt={movie.title} className="movie-poster" />}
               <div className="movie-info">
-                <h2 className="movie-title">{movie.Title}</h2>
-                <p className="text-[var(--text-secondary)] mb-1">{movie.Genre}</p>
+                <h2 className="movie-title">{movie.title}</h2>
+                <p className="text-[var(--text-secondary)] mb-1">{movie.genre}</p>
                 <p className="text-[var(--text-secondary)] text-sm mb-1">Jam Tayang: 13:00, 16:00, 19:00</p>
                 <p className="text-[var(--success)] font-bold mb-2">Harga: Rp50.000</p>
-                <Link to={`/movie/${movie.MovieID}`} className="btn btn-primary w-full text-center">View Details</Link>
+                <Link to={`/movie/${movie.movieId}`} className="btn btn-primary w-full text-center">View Details</Link>
               </div>
             </div>
           ))}

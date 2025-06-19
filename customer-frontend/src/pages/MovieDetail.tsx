@@ -3,16 +3,16 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 
 type Movie = {
-  MovieID: string;
-  Title: string;
-  Synopsis: string;
-  Genre: string;
-  Director?: string;
-  ProductionHouse?: string;
-  PosterURL?: string;
-  Actors?: string;
-  Duration?: number;
-  IsActive?: boolean;
+  movieId: string;
+  title: string;
+  synopsis: string;
+  genre: string;
+  director?: string;
+  productionHouse?: string;
+  posterUrl?: string;
+  actors?: string;
+  duration?: number;
+  isActive?: boolean;
 };
 
 const MovieDetail: React.FC = () => {
@@ -45,42 +45,42 @@ const MovieDetail: React.FC = () => {
       {movie && (
         <div className="movie-detail">
           <div className="movie-detail-poster">
-            {movie.PosterURL && (
-              <img src={movie.PosterURL} alt={movie.Title} className="w-full rounded-lg" />
+            {movie.posterUrl && (
+              <img src={movie.posterUrl} alt={movie.title} className="w-full rounded-lg" />
             )}
           </div>
           <div className="movie-detail-info">
-            <h1 className="movie-detail-title">{movie.Title}</h1>
+            <h1 className="movie-detail-title">{movie.title}</h1>
             <div className="movie-detail-meta">
-              <p><strong>Genre:</strong> {movie.Genre}</p>
-              {movie.Director && <p><strong>Director:</strong> {movie.Director}</p>}
-              {movie.ProductionHouse && <p><strong>Production House:</strong> {movie.ProductionHouse}</p>}
-              {movie.Actors && (
-                <p><strong>Actors:</strong> {movie.Actors}</p>
+              <p><strong>Genre:</strong> {movie.genre}</p>
+              {movie.director && <p><strong>Director:</strong> {movie.director}</p>}
+              {movie.productionHouse && <p><strong>Production House:</strong> {movie.productionHouse}</p>}
+              {movie.actors && (
+                <p><strong>Actors:</strong> {movie.actors}</p>
               )}
-              {movie.Duration && <p><strong>Duration:</strong> {movie.Duration} minutes</p>}
+              {movie.duration && <p><strong>Duration:</strong> {movie.duration} minutes</p>}
             </div>
             <div className="movie-detail-description">
               <h3 className="text-lg font-semibold mb-2">Synopsis</h3>
-              <p>{movie.Synopsis}</p>
+              <p>{movie.synopsis}</p>
             </div>
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-2">Available Showtimes</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Link
-                  to={`/seat-order?movieId=${movie.MovieID}&showtimeId=1`}
+                  to={`/seat-order?movieId=${movie.movieId}&showtimeId=1`}
                   className="btn btn-primary text-center"
                 >
                   13:00 - Studio 1
                 </Link>
                 <Link
-                  to={`/seat-order?movieId=${movie.MovieID}&showtimeId=2`}
+                  to={`/seat-order?movieId=${movie.movieId}&showtimeId=2`}
                   className="btn btn-primary text-center"
                 >
                   16:00 - Studio 1
                 </Link>
                 <Link
-                  to={`/seat-order?movieId=${movie.MovieID}&showtimeId=3`}
+                  to={`/seat-order?movieId=${movie.movieId}&showtimeId=3`}
                   className="btn btn-primary text-center"
                 >
                   19:00 - Studio 1

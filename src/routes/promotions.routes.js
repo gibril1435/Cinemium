@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 // Get a promotion by ID
 router.get('/:id', (req, res) => {
   const promotions = readTable('Promotions');
-  const promo = promotions.find(p => p.PromotionID == req.params.id);
+  const promo = promotions.find(p => p.promotionId == req.params.id);
   if (!promo) return res.status(404).json({ error: 'Promotion not found' });
   res.json(promo);
 });
@@ -19,8 +19,8 @@ router.get('/:id', (req, res) => {
 // Create a new promotion
 router.post('/', (req, res) => {
   const promotions = readTable('Promotions');
-  const newId = promotions.length ? Math.max(...promotions.map(p => p.PromotionID || p.id || 0)) + 1 : 1;
-  const newPromo = { ...req.body, PromotionID: newId };
+  const newId = promotions.length ? Math.max(...promotions.map(p => p.promotionId || p.id || 0)) + 1 : 1;
+  const newPromo = { ...req.body, promotionId: newId };
   promotions.push(newPromo);
   writeTable('Promotions', promotions);
   res.status(201).json(newPromo);
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
 // Update a promotion
 router.put('/:id', (req, res) => {
   const promotions = readTable('Promotions');
-  const idx = promotions.findIndex(p => p.PromotionID == req.params.id);
+  const idx = promotions.findIndex(p => p.promotionId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Promotion not found' });
   promotions[idx] = { ...promotions[idx], ...req.body };
   writeTable('Promotions', promotions);
@@ -39,7 +39,7 @@ router.put('/:id', (req, res) => {
 // Delete a promotion
 router.delete('/:id', (req, res) => {
   let promotions = readTable('Promotions');
-  const idx = promotions.findIndex(p => p.PromotionID == req.params.id);
+  const idx = promotions.findIndex(p => p.promotionId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Promotion not found' });
   const deleted = promotions.splice(idx, 1)[0];
   writeTable('Promotions', promotions);

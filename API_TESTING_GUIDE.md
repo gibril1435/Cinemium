@@ -240,18 +240,15 @@ curl -X GET http://localhost:5000/api/booking/showtimes/1/seats
 ```
 
 #### Create a booking
-```bash
+
+Use the following endpoint to create a new booking:
+
+POST /api/booking/transactions
+
+Example:
 curl -X POST http://localhost:5000/api/booking/transactions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "showtimeId": 1,
-    "seats": ["A1", "A2"],
-    "addOns": [
-      {"id": 1, "quantity": 2}
-    ]
-  }'
-```
+  -d '{"showtimeId": "1", "seatIds": ["A1", "A2"], "addOns": [{"id": 1, "quantity": 2}]}'
 
 #### Get booking history
 ```bash

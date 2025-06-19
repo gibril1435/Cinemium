@@ -1,28 +1,28 @@
 [
   {
-    "MovieID": 1,
-    "Title": "The Great Adventure",
-    "Synopsis": "An epic journey.",
-    "Genre": "Adventure",
-    "Director": "Jane Doe",
-    "Actors": "John Smith, Alice Brown",
-    "ProductionHouse": "Epic Studios",
-    "Duration": 120,
-    "PosterURL": "https://example.com/poster1.jpg",
-    "IsActive": true,
-    "CreatedAt": null
+    "movieId": 1,
+    "title": "The Great Adventure",
+    "synopsis": "An epic journey.",
+    "genre": "Adventure",
+    "director": "Jane Doe",
+    "actors": "John Smith, Alice Brown",
+    "productionHouse": "Epic Studios",
+    "duration": 120,
+    "posterUrl": "https://example.com/poster1.jpg",
+    "isActive": true,
+    "createdAt": null
   },
   {
-    "MovieID": 2,
-    "Title": "Space Odyssey",
-    "Synopsis": "A trip through the stars.",
-    "Genre": "Sci-Fi",
-    "Director": "Stan Kubrick",
-    "Actors": "Dave Bowman, HAL 9000",
-    "ProductionHouse": "Space Films",
-    "Duration": 140,
-    "PosterURL": "https://example.com/poster2.jpg",
-    "IsActive": true,
-    "CreatedAt": null
+    "movieId": 2,
+    "title": "Space Odyssey",
+    "synopsis": "A trip through the stars.",
+    "genre": "Sci-Fi",
+    "director": "Stan Kubrick",
+    "actors": "Dave Bowman, HAL 9000",
+    "productionHouse": "Space Films",
+    "duration": 140,
+    "posterUrl": "https://example.com/poster2.jpg",
+    "isActive": true,
+    "createdAt": null
   }
 ] 

@@ -5,7 +5,9 @@ import api from '../api';
 interface Booking {
   id: string;
   movieTitle: string;
-  showtime: string;
+  showtime: {
+    showDateTime: string;
+  } | null;
   seats: string[];
   studio?: string;
   qrCodeUrl?: string;
@@ -52,7 +54,7 @@ const PaymentSuccess: React.FC = () => {
           <div className="space-y-2">
             <div><strong>Booking ID:</strong> {booking.id}</div>
             <div><strong>Movie:</strong> {booking.movieTitle}</div>
-            <div><strong>Showtime:</strong> {new Date(booking.showtime).toLocaleString()}</div>
+            <div><strong>Showtime:</strong> {booking.showtime ? new Date(booking.showtime.showDateTime).toLocaleString() : 'N/A'}</div>
             <div><strong>Seats:</strong> {booking.seats.join(', ')}</div>
             <div><strong>Total Amount:</strong> Rp{booking.totalAmount}</div>
             <div><strong>Status:</strong> <span className="text-[var(--success)]">{booking.status}</span></div>

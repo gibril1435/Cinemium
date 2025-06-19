@@ -213,7 +213,7 @@ router.get('/', (req, res) => {
 // Get a movie by ID
 router.get('/:id', (req, res) => {
   const movies = readTable('Movies');
-  const movie = movies.find(m => m.MovieID == req.params.id);
+  const movie = movies.find(m => m.movieId == req.params.id);
   if (!movie) return res.status(404).json({ error: 'Movie not found' });
   res.json(movie);
 });

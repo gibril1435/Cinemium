@@ -1,14 +1,14 @@
 [
   {
-    "StudioID": 1,
-    "StudioNumber": 1,
-    "Capacity": 40,
-    "IsActive": true
+    "studioId": 1,
+    "studioNumber": 1,
+    "capacity": 40,
+    "isActive": true
   },
   {
-    "StudioID": 2,
-    "StudioNumber": 2,
-    "Capacity": 40,
-    "IsActive": true
+    "studioId": 2,
+    "studioNumber": 2,
+    "capacity": 40,
+    "isActive": true
   }
 ] 

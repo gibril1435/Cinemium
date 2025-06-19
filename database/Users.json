@@ -1,30 +1,30 @@
 [
   {
-    "UserID": 1,
-    "Username": "admin",
-    "PasswordHash": "dummyhash1",
-    "IsAdmin": true,
-    "CreatedAt": null,
-    "LastLoginAt": null
+    "userId": 1,
+    "username": "admin",
+    "passwordHash": "dummyhash1",
+    "isAdmin": true,
+    "createdAt": null,
+    "lastLoginAt": null
   },
   {
-    "UserID": 2,
-    "Username": "user1",
-    "PasswordHash": "dummyhash2",
-    "IsAdmin": false,
-    "CreatedAt": null,
-    "LastLoginAt": null
+    "userId": 2,
+    "username": "user1",
+    "passwordHash": "dummyhash2",
+    "isAdmin": false,
+    "createdAt": null,
+    "lastLoginAt": null
   },
   {
-    "UserID": 3,
-    "Username": "user2",
-    "PasswordHash": "dummyhash3",
-    "IsAdmin": false,
-    "CreatedAt": null,
-    "LastLoginAt": null
+    "userId": 3,
+    "username": "user2",
+    "passwordHash": "dummyhash3",
+    "isAdmin": false,
+    "createdAt": null,
+    "lastLoginAt": null
   },
   {
-    "UserID": 4,
+    "userId": 4,
     "username": "bryant",
     "email": "bryant@gmail.com",
     "password": "$2b$10$m5cAAUqJdNDT3K6brmeAeeTWw5sbyXnMGw4ia/TdIpr1lvwNbzvoO",
@@ -32,11 +32,19 @@
     "createdAt": "2025-06-19T14:21:27.278Z"
   },
   {
-    "UserID": 5,
+    "userId": 5,
     "username": "gibril",
     "email": "gibril1435@gmail.com",
     "password": "$2b$10$6WqPzAzoqyt2ouZ36Oxq.e377K1UgeVrn5W73JettPX9IK9pm.z3m",
     "role": "customer",
     "createdAt": "2025-06-19T14:31:48.874Z"
+  },
+  {
+    "UserID": null,
+    "username": "bryant",
+    "email": "bryantcianata446@gmail.com",
+    "password": "$2b$10$Qfsw5q9Q.VlME6CoDfIrkuQhHkGq4oHtgIPsBYjeVdorGkGDFWxAC",
+    "role": "customer",
+    "createdAt": "2025-06-19T18:57:16.335Z"
   }
 ]

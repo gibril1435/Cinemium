@@ -1,1 +1,44 @@
-[] 
+[
+  {
+    "bookingSeatId": 1,
+    "bookingId": 1,
+    "showtimeId": "1",
+    "seatNumber": "A2"
+  },
+  {
+    "bookingSeatId": 2,
+    "bookingId": 2,
+    "showtimeId": "1",
+    "seatNumber": "A3"
+  },
+  {
+    "bookingSeatId": 3,
+    "bookingId": 3,
+    "showtimeId": "1",
+    "seatNumber": "A4"
+  },
+  {
+    "bookingSeatId": 4,
+    "bookingId": 4,
+    "showtimeId": "1",
+    "seatNumber": "A1"
+  },
+  {
+    "bookingSeatId": 5,
+    "bookingId": 5,
+    "showtimeId": "1",
+    "seatNumber": "A5"
+  },
+  {
+    "bookingSeatId": 6,
+    "bookingId": 6,
+    "showtimeId": "1",
+    "seatNumber": "A6"
+  },
+  {
+    "bookingSeatId": 7,
+    "bookingId": 7,
+    "showtimeId": "1",
+    "seatNumber": "A7"
+  }
+]

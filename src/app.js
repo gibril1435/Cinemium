@@ -72,7 +72,7 @@ app.use('/api/promotions', (req, res, next) => {
 app.use('/api/admin/promotions', adminPromotionRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin/addons', addonsRoutes);
+app.use('/api/addons', addonsRoutes);
 app.use('/api/admin/studios', studiosRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin/prices', ticketPriceRoutes);

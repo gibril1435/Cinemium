@@ -66,13 +66,13 @@ router.get('/', (req, res) => {
     
     // Join data for complete schedule information
     const schedules = showtimes.map(showtime => {
-      const movie = movies.find(m => m.MovieID == showtime.MovieID);
-      const studio = studios.find(s => s.StudioID == showtime.StudioID);
+      const movie = movies.find(m => m.movieId == showtime.movieId);
+      const studio = studios.find(s => s.studioId == showtime.studioId);
       
       return {
         ...showtime,
-        movie: movie ? { title: movie.Title, duration: movie.Duration } : null,
-        studio: studio ? { number: studio.StudioNumber, capacity: studio.Capacity } : null
+        movie: movie ? { title: movie.title, duration: movie.duration } : null,
+        studio: studio ? { number: studio.studioNumber, capacity: studio.capacity } : null
       };
     });
     
@@ -90,7 +90,7 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const showtimes = readTable('Showtimes');
-    const showtime = showtimes.find(s => s.ShowtimeID == req.params.id);
+    const showtime = showtimes.find(s => s.showtimeId == req.params.id);
     
     if (!showtime) {
       return res.status(404).json({
@@ -102,13 +102,13 @@ router.get('/:id', (req, res) => {
     const movies = readTable('Movies');
     const studios = readTable('Studios');
     
-    const movie = movies.find(m => m.MovieID == showtime.MovieID);
-    const studio = studios.find(s => s.StudioID == showtime.StudioID);
+    const movie = movies.find(m => m.movieId == showtime.movieId);
+    const studio = studios.find(s => s.studioId == showtime.studioId);
     
     const schedule = {
       ...showtime,
-      movie: movie ? { title: movie.Title, duration: movie.Duration } : null,
-      studio: studio ? { number: studio.StudioNumber, capacity: studio.Capacity } : null
+      movie: movie ? { title: movie.title, duration: movie.duration } : null,
+      studio: studio ? { number: studio.studioNumber, capacity: studio.capacity } : null
     };
     
     res.json(schedule);
@@ -124,26 +124,26 @@ router.get('/:id', (req, res) => {
 // Create a new schedule
 router.post('/', (req, res) => {
   try {
-    const { MovieID, StudioID, ShowDateTime, Price } = req.body;
+    const { movieId, studioId, showDateTime, price } = req.body;
     
-    if (!MovieID || !StudioID || !ShowDateTime) {
+    if (!movieId || !studioId || !showDateTime) {
       return res.status(400).json({
         error: 'Validation Error',
-        message: 'MovieID, StudioID, and ShowDateTime are required'
+        message: 'movieId, studioId, and showDateTime are required'
       });
     }
     
     const showtimes = readTable('Showtimes');
-    const newId = showtimes.length ? Math.max(...showtimes.map(s => s.ShowtimeID)) + 1 : 1;
+    const newId = showtimes.length ? Math.max(...showtimes.map(s => s.showtimeId)) + 1 : 1;
     
     const newSchedule = {
-      ShowtimeID: newId,
-      MovieID: parseInt(MovieID),
-      StudioID: parseInt(StudioID),
-      ShowDateTime: new Date(ShowDateTime).toISOString(),
-      Price: Price || 50000,
-      CreatedAt: new Date().toISOString(),
-      UpdatedAt: new Date().toISOString()
+      showtimeId: newId,
+      movieId: parseInt(movieId),
+      studioId: parseInt(studioId),
+      showDateTime: new Date(showDateTime).toISOString(),
+      price: price || 50000,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     showtimes.push(newSchedule);
@@ -162,7 +162,7 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const showtimes = readTable('Showtimes');
-    const idx = showtimes.findIndex(s => s.ShowtimeID == req.params.id);
+    const idx = showtimes.findIndex(s => s.showtimeId == req.params.id);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -174,7 +174,7 @@ router.put('/:id', (req, res) => {
     showtimes[idx] = {
       ...showtimes[idx],
       ...req.body,
-      UpdatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
     
     writeTable('Showtimes', showtimes);
@@ -192,7 +192,7 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     let showtimes = readTable('Showtimes');
-    const idx = showtimes.findIndex(s => s.ShowtimeID == req.params.id);
+    const idx = showtimes.findIndex(s => s.showtimeId == req.params.id);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -231,10 +231,10 @@ router.get('/availability', (req, res) => {
     
     // Check for conflicts
     const conflicts = showtimes.filter(showtime => {
-      if (showtime.StudioID != studioId) return false;
-      if (excludeShowtimeId && showtime.ShowtimeID == excludeShowtimeId) return false;
+      if (showtime.studioId != studioId) return false;
+      if (excludeShowtimeId && showtime.showtimeId == excludeShowtimeId) return false;
       
-      const showtimeStart = new Date(showtime.ShowDateTime);
+      const showtimeStart = new Date(showtime.showDateTime);
       const showtimeEnd = new Date(showtimeStart.getTime() + 120 * 60000); // Assume 2 hours per movie
       
       return (targetStart < showtimeEnd && targetEnd > showtimeStart);
@@ -245,9 +245,9 @@ router.get('/availability', (req, res) => {
     res.json({
       available,
       conflicts: conflicts.map(c => ({
-        id: c.ShowtimeID,
-        ShowDateTime: c.ShowDateTime,
-        MovieID: c.MovieID
+        id: c.showtimeId,
+        showDateTime: c.showDateTime,
+        movieId: c.movieId
       }))
     });
   } catch (error) {
@@ -272,16 +272,16 @@ router.post('/showtimes', (req, res) => {
     }
     
     const showtimes = readTable('Showtimes');
-    const newId = showtimes.length ? Math.max(...showtimes.map(s => s.ShowtimeID)) + 1 : 1;
+    const newId = showtimes.length ? Math.max(...showtimes.map(s => s.showtimeId)) + 1 : 1;
     
     const newShowtime = {
-      ShowtimeID: newId,
-      MovieID: parseInt(movieId),
-      StudioID: parseInt(studioId),
-      ShowDateTime: new Date(showDateTime).toISOString(),
-      Price: price || 12.50,
-      CreatedAt: new Date().toISOString(),
-      UpdatedAt: new Date().toISOString()
+      showtimeId: newId,
+      movieId: parseInt(movieId),
+      studioId: parseInt(studioId),
+      showDateTime: new Date(showDateTime).toISOString(),
+      price: price || 12.50,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     showtimes.push(newShowtime);
@@ -309,7 +309,7 @@ router.put('/showtimes/:id', (req, res) => {
     }
     
     const showtimes = readTable('Showtimes');
-    const idx = showtimes.findIndex(s => s.ShowtimeID == req.params.id);
+    const idx = showtimes.findIndex(s => s.showtimeId == req.params.id);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -320,9 +320,9 @@ router.put('/showtimes/:id', (req, res) => {
     
     showtimes[idx] = {
       ...showtimes[idx],
-      ShowDateTime: new Date(showDateTime).toISOString(),
-      Price: price || showtimes[idx].Price,
-      UpdatedAt: new Date().toISOString()
+      showDateTime: new Date(showDateTime).toISOString(),
+      price: price || showtimes[idx].price,
+      updatedAt: new Date().toISOString()
     };
     
     writeTable('Showtimes', showtimes);
@@ -355,8 +355,8 @@ router.get('/optimal-showtimes', (req, res) => {
     
     // Get existing showtimes for the studio on that date
     const existingShowtimes = showtimes.filter(s => {
-      if (s.StudioID != studioId) return false;
-      const showtimeDate = new Date(s.ShowDateTime);
+      if (s.studioId != studioId) return false;
+      const showtimeDate = new Date(s.showDateTime);
       return showtimeDate >= startOfDay && showtimeDate <= endOfDay;
     });
     
@@ -370,7 +370,7 @@ router.get('/optimal-showtimes', (req, res) => {
       
       // Check if this time conflicts with existing showtimes
       const conflicts = existingShowtimes.filter(existing => {
-        const existingTime = new Date(existing.ShowDateTime);
+        const existingTime = new Date(existing.showDateTime);
         const existingEnd = new Date(existingTime.getTime() + 120 * 60000); // 2 hours
         return suggestedTime < existingEnd && suggestedTime > existingTime;
       });
@@ -384,7 +384,7 @@ router.get('/optimal-showtimes', (req, res) => {
         suggestedTimes.push({
           time: suggestedTime.toISOString(),
           available: false,
-          conflicts: conflicts.map(c => c.ShowtimeID)
+          conflicts: conflicts.map(c => c.showtimeId)
         });
       }
     }
@@ -395,9 +395,9 @@ router.get('/optimal-showtimes', (req, res) => {
       date: targetDate.toISOString(),
       suggestedTimes,
       existingShowtimes: existingShowtimes.map(s => ({
-        id: s.ShowtimeID,
-        ShowDateTime: s.ShowDateTime,
-        MovieID: s.MovieID
+        id: s.showtimeId,
+        showDateTime: s.showDateTime,
+        movieId: s.movieId
       }))
     });
   } catch (error) {
@@ -427,19 +427,19 @@ router.get('/studio-schedule', (req, res) => {
     const end = new Date(endDate);
     
     const schedule = showtimes.filter(showtime => {
-      if (showtime.StudioID != studioId) return false;
-      const showtimeDate = new Date(showtime.ShowDateTime);
+      if (showtime.studioId != studioId) return false;
+      const showtimeDate = new Date(showtime.showDateTime);
       return showtimeDate >= start && showtimeDate <= end;
     }).map(showtime => {
-      const movie = movies.find(m => m.MovieID == showtime.MovieID);
+      const movie = movies.find(m => m.movieId == showtime.movieId);
       return {
         ...showtime,
-        movie: movie ? { title: movie.Title, duration: movie.Duration } : null
+        movie: movie ? { title: movie.title, duration: movie.duration } : null
       };
     });
     
-    // Sort by ShowDateTime
-    schedule.sort((a, b) => new Date(a.ShowDateTime) - new Date(b.ShowDateTime));
+    // Sort by showDateTime
+    schedule.sort((a, b) => new Date(a.showDateTime) - new Date(b.showDateTime));
     
     res.json({
       studioId,

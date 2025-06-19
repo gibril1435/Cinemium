@@ -82,15 +82,10 @@
 - `GET /api/addons/:id` - Get add-on details
 
 ### Booking (Unified Transaction Endpoints)
-- `POST /api/booking` - Create a new booking (purchase tickets)
-  - Body: `{ showtimeId: number, seats: string[], addOns: [{ id: number, quantity: number }] }`
-  - Response: `{ transactionId: number, tickets: [{ seatNumber: string, qrCode: string }], totalAmount: number }`
+- `POST /api/booking/transactions` - Create a new booking (purchase tickets)
 - `GET /api/booking/:id` - Get booking details
-  - Response: `{ id: number, movieTitle: string, showtime: string, studio: number, seats: string[], addOns: [{ name: string, quantity: number, price: number }], totalAmount: number }`
 - `GET /api/booking/:id/ticket-pdf` - Get PDF ticket
-  - Response: PDF file
 - `GET /api/booking/history` - Get user's booking history (includes studio number)
-  - Response: `{ history: [{ date: string, transactions: [{ id: number, movieTitle: string, showTime: string, studio: number, seats: string[], totalAmount: number }] }] }`
 
 ### Seat Layout
 - `GET /api/showtimes/:showtimeId/seats` - Get seat layout for a showtime

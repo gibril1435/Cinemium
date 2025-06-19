@@ -9,7 +9,7 @@ exports.getActivePromotions = (req, res) => {
 // Get promotion by ID
 exports.getPromotionById = (req, res) => {
   const promotions = readTable('Promotions');
-  const promotion = promotions.find(p => p.PromotionID === parseInt(req.params.id));
+  const promotion = promotions.find(p => p.promotionId === parseInt(req.params.id));
   if (!promotion) {
     return res.status(404).json({ error: 'Promotion not found' });
   }
@@ -19,8 +19,8 @@ exports.getPromotionById = (req, res) => {
 // Create new promotion (admin only)
 exports.createPromotion = (req, res) => {
   const promotions = readTable('Promotions');
-  const newId = promotions.length ? Math.max(...promotions.map(p => p.PromotionID)) + 1 : 1;
-  const newPromo = { ...req.body, PromotionID: newId };
+  const newId = promotions.length ? Math.max(...promotions.map(p => p.promotionId)) + 1 : 1;
+  const newPromo = { ...req.body, promotionId: newId };
   promotions.push(newPromo);
   writeTable('Promotions', promotions);
   res.status(201).json(newPromo);
@@ -29,12 +29,12 @@ exports.createPromotion = (req, res) => {
 // Update promotion (admin only)
 exports.updatePromotion = (req, res) => {
   const promotions = readTable('Promotions');
-  const promotion = promotions.find(p => p.PromotionID === parseInt(req.params.id));
+  const promotion = promotions.find(p => p.promotionId === parseInt(req.params.id));
   if (!promotion) {
     return res.status(404).json({ error: 'Promotion not found' });
   }
   const updatedPromotion = { ...promotion, ...req.body };
-  const index = promotions.findIndex(p => p.PromotionID === parseInt(req.params.id));
+  const index = promotions.findIndex(p => p.promotionId === parseInt(req.params.id));
   promotions[index] = updatedPromotion;
   writeTable('Promotions', promotions);
   res.json(updatedPromotion);
@@ -43,11 +43,11 @@ exports.updatePromotion = (req, res) => {
 // Delete promotion (admin only)
 exports.deletePromotion = (req, res) => {
   const promotions = readTable('Promotions');
-  const promotion = promotions.find(p => p.PromotionID === parseInt(req.params.id));
+  const promotion = promotions.find(p => p.promotionId === parseInt(req.params.id));
   if (!promotion) {
     return res.status(404).json({ error: 'Promotion not found' });
   }
-  const filteredPromotions = promotions.filter(p => p.PromotionID !== parseInt(req.params.id));
+  const filteredPromotions = promotions.filter(p => p.promotionId !== parseInt(req.params.id));
   writeTable('Promotions', filteredPromotions);
   res.status(204).send();
 };

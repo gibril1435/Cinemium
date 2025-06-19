@@ -1,6 +1,6 @@
 [
   {
-    "AddOnID": 1,
+    "addOnId": 1,
     "name": "Popcorn",
     "description": "Large popcorn",
     "price": 25000,

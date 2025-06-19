@@ -1,1 +1,51 @@
-[] 
+[
+  {
+    "bookingId": 1,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:37:44.756Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 2,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:42:20.814Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 3,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:42:47.435Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 4,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:49:05.798Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 5,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:51:03.660Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 6,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:53:11.892Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 7,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T18:53:36.202Z",
+    "status": "confirmed"
+  }
+]

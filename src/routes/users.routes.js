@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 // Get a user by ID
 router.get('/:id', (req, res) => {
   const users = readTable('Users');
-  const user = users.find(u => u.UserID == req.params.id);
+  const user = users.find(u => u.userId == req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);
 });
@@ -19,8 +19,8 @@ router.get('/:id', (req, res) => {
 // Create a new user
 router.post('/', (req, res) => {
   const users = readTable('Users');
-  const newId = users.length ? Math.max(...users.map(u => u.UserID)) + 1 : 1;
-  const newUser = { ...req.body, UserID: newId };
+  const newId = users.length ? Math.max(...users.map(u => u.userId)) + 1 : 1;
+  const newUser = { ...req.body, userId: newId };
   users.push(newUser);
   writeTable('Users', users);
   res.status(201).json(newUser);
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
 // Update a user
 router.put('/:id', (req, res) => {
   const users = readTable('Users');
-  const idx = users.findIndex(u => u.UserID == req.params.id);
+  const idx = users.findIndex(u => u.userId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'User not found' });
   users[idx] = { ...users[idx], ...req.body };
   writeTable('Users', users);
@@ -39,7 +39,7 @@ router.put('/:id', (req, res) => {
 // Delete a user
 router.delete('/:id', (req, res) => {
   let users = readTable('Users');
-  const idx = users.findIndex(u => u.UserID == req.params.id);
+  const idx = users.findIndex(u => u.userId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'User not found' });
   const deleted = users.splice(idx, 1)[0];
   writeTable('Users', users);
