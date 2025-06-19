@@ -1,0 +1,42 @@
+[
+  {
+    "UserID": 1,
+    "Username": "admin",
+    "PasswordHash": "dummyhash1",
+    "IsAdmin": true,
+    "CreatedAt": null,
+    "LastLoginAt": null
+  },
+  {
+    "UserID": 2,
+    "Username": "user1",
+    "PasswordHash": "dummyhash2",
+    "IsAdmin": false,
+    "CreatedAt": null,
+    "LastLoginAt": null
+  },
+  {
+    "UserID": 3,
+    "Username": "user2",
+    "PasswordHash": "dummyhash3",
+    "IsAdmin": false,
+    "CreatedAt": null,
+    "LastLoginAt": null
+  },
+  {
+    "UserID": 4,
+    "username": "bryant",
+    "email": "bryant@gmail.com",
+    "password": "$2b$10$m5cAAUqJdNDT3K6brmeAeeTWw5sbyXnMGw4ia/TdIpr1lvwNbzvoO",
+    "role": "customer",
+    "createdAt": "2025-06-19T14:21:27.278Z"
+  },
+  {
+    "UserID": 5,
+    "username": "gibril",
+    "email": "gibril1435@gmail.com",
+    "password": "$2b$10$6WqPzAzoqyt2ouZ36Oxq.e377K1UgeVrn5W73JettPX9IK9pm.z3m",
+    "role": "customer",
+    "createdAt": "2025-06-19T14:31:48.874Z"
+  }
+]

@@ -1,0 +1,229 @@
+###################################################
+# DESKRIPSI FUNGSI & VISUAL - CUSTOMER WEB CINEMIUM
+###################################################
+
+================================
+1. Halaman Utama (Home Page)
+================================
+
+FUNGSI:
+- Berfungsi sebagai hub navigasi utama untuk pengguna.
+- Menampilkan daftar film yang sedang tayang dan promosi yang ada.
+- Tampilan halaman beradaptasi berdasarkan status login pengguna.
+- Mengklik sebuah film akan mengarahkan pengguna ke Halaman Detail Film.
+- Fitur pencarian memungkinkan pemfilteran daftar film secara dinamis berdasarkan judul.
+
+TATA LETAK VISUAL:
+- Kondisi Belum Login:
+    - Header menampilkan logo "CINEMIUM" di sisi kiri, dengan tombol "[ Register ]" dan "[ Login ]" di pojok kanan atas.
+    - Terdapat carousel yang menampilkan poster film dan promosi, bergulir otomatis setiap 4 detik. Isi carousel mencakup 3 poster film terpopuler dan 1 gambar produk tambahan.
+    - Di dalam carousel terdapat tombol ajakan (CTA) "[ Beli Tiket ]".
+    - Di bawah carousel, terdapat bar pencarian dengan placeholder "[ Cari film..._________________]".
+    - Terdapat bagian "🎞️ Film yang Sedang Tayang"  yang menampilkan daftar film beserta poster, judul, genre, jam tayang, dan harga tiket.
+- Kondisi Sudah Login:
+    - Header menampilkan tombol "[History]" di pojok kiri atas.
+    - Di pojok kanan atas, terdapat sapaan kepada pengguna (contoh: "Hi, johndoe") dan tombol "[Logout]".
+    - Konten lainnya (carousel, pencarian, daftar film) sama seperti versi belum login.
+
+
+================================
+2. Halaman Registrasi (Register Page)
+================================
+
+FUNGSI:
+- Menyediakan fasilitas bagi pengguna untuk mendaftarkan akun baru.
+- Proses validasi akan memeriksa apakah username sudah ada di database dan apakah password serta konfirmasi password sama.
+- Jika validasi berhasil, pengguna akan diarahkan ke Halaman Login.
+
+TATA LETAK VISUAL:
+- Header berupa navbar sederhana yang menampilkan logo "CINEMIUM".
+- Judul halaman adalah "Buat Akun Baru".
+- Terdapat formulir yang meminta input untuk Username, Password, dan "Ulangi Password".
+- Terdapat catatan validasi yang menjelaskan bahwa username harus unik dan password harus cocok.
+- Sebuah tombol "[ Register ]" tersedia di bagian bawah formulir.
+
+
+================================
+3. Halaman Login (Login Page)
+================================
+
+FUNGSI:
+- Memverifikasi kredensial pengguna untuk dapat masuk ke akun mereka.
+- Skenario 1: Jika akses berasal dari Halaman Utama, login yang berhasil akan mengarahkan pengguna kembali ke Halaman Utama dengan status sudah login.
+- Skenario 2: Jika akses berasal dari Halaman Detail Film (setelah menekan 'Buy Ticket'), login yang berhasil akan mengarahkan pengguna langsung ke Halaman Pemilihan Kursi.
+- Selalu tersedia tautan untuk mengarahkan pengguna ke Halaman Registrasi.
+
+TATA LETAK VISUAL:
+- Header berupa navbar yang menampilkan logo "CINEMIUM".
+- Judul halaman adalah "Login ke Akun".
+- Terdapat formulir yang meminta input untuk Username dan Password.
+- Sebuah tombol "[ Login ]" tersedia di bawah formulir.
+- Terdapat tautan "[Buat Akun Sekarang]" yang mengarah ke Halaman Registrasi.
+
+
+================================
+4. Halaman Detail Film (Movie Page)
+================================
+
+FUNGSI:
+- Menampilkan informasi lengkap dan spesifik mengenai satu judul film.
+- Informasi yang ditampilkan mencakup sinopsis, genre, daftar aktor, sutradara, penulis, dan rumah produksi.
+- Tombol "[BUY TICKET]" akan mengarahkan ke Halaman Pemilihan Kursi jika pengguna sudah login , atau ke Halaman Login jika belum.
+
+TATA LETAK VISUAL:
+- Header berupa navbar dengan logo "CINEMIUM" dan tombol login/logout yang statusnya disesuaikan.
+- Tampilan utama menyajikan poster film di satu sisi.
+- Di sisi lainnya, ditampilkan detail berupa Judul Film, Sinopsis, Genre, Aktor, dan Sutradara.
+- Terdapat bagian "Pilih Jam Tayang" yang berisi tombol-tombol jam tayang yang tersedia.
+- Di bawah daftar jam tayang, terdapat tombol "[ Buy Ticket ]".
+
+
+================================
+5. Halaman Pemilihan Kursi (Seat Order Page)
+================================
+
+FUNGSI:
+- Memungkinkan pengguna untuk memilih kursi secara visual untuk film dan jam tayang yang telah dipilih.
+- Tata letak kursi yang ditampilkan berukuran 8x5 (total 40 kursi).
+- Pengguna dapat memilih maksimal 4 kursi.
+- Menekan tombol "[PAY]" akan diasumsikan sebagai pembayaran berhasil dan mengarahkan pengguna ke Halaman Tiket.
+
+TATA LETAK VISUAL:
+- Header menampilkan navbar dengan logo "CINEMIUM".
+- Judul halaman memberikan informasi film dan jam tayang yang dipilih (contoh: "Pilih Kursi - Film A - Jam: 13:00").
+- Terdapat representasi visual "LAYAR" di bagian atas denah.
+- Di bawahnya, ditampilkan kisi-kisi kursi dengan penanda baris (A, B, C, dst.) dan kolom (1, 2, 3, dst.).
+- Terdapat legenda yang menjelaskan status kursi: [G] Dipilih, [A] Dipesan, [ ] Kosong.
+- Bagian bawah menampilkan ringkasan kursi yang dipilih ("Pilihan Anda: C1, C2") dan total harga.
+- Terdapat tombol "[ Bayar ]" untuk melanjutkan proses.
+
+
+================================
+6. Halaman Tiket (Ticket Page)
+================================
+
+FUNGSI:
+- Menampilkan bukti digital dari tiket yang telah berhasil dibeli.
+- Halaman ini dapat diakses setelah proses pembayaran selesai atau melalui Halaman Riwayat.
+- Detail yang ditampilkan mencakup judul film, nomor kursi, jam tayang, tanggal, dan nomor studio.
+- Terdapat tombol untuk kembali ke Halaman Utama.
+
+TATA LETAK VISUAL:
+- Header menampilkan navbar dengan logo "CINEMIUM".
+- Terdapat pesan konfirmasi keberhasilan seperti "Tiket Anda Berhasil Dibuat!".
+- Detail tiket ditampilkan dalam sebuah kotak yang berisi: Judul Film, Tanggal, Jam Tayang, Studio, dan Kursi.
+- Di dalam kotak tersebut juga terdapat [QR Code Tiket].
+- Terdapat tombol "[ Kembali ke Home ]" dan tombol opsional "[ Download PDF ]".
+
+
+================================
+7. Halaman Riwayat (History Page)
+================================
+
+FUNGSI:
+- Menampilkan daftar semua transaksi pembelian tiket yang pernah dilakukan oleh pengguna.
+- Riwayat dikelompokkan berdasarkan tanggal transaksi.
+- Setiap entri riwayat bersifat interaktif; mengkliknya akan mengarahkan pengguna ke Halaman Tiket yang sesuai.
+
+TATA LETAK VISUAL:
+- Header menampilkan navbar dengan logo "CINEMIUM".
+- Judul halaman adalah "Riwayat Pembelian".
+- Riwayat ditampilkan sebagai daftar tautan, contohnya "[ 📅 Tiket: Film A - 17 Juni 2025 ]".
+- Terdapat tombol "[ Kembali ke Home ]" di bagian bawah.
+
+
+###################################################
+# DESKRIPSI FUNGSI & VISUAL - ADMIN WEB CINEMIUM
+###################################################
+
+Catatan: Semua halaman admin memiliki navbar yang menampilkan judul "Cinemium" dan tautan navigasi ke Home, Sales, Cinema Management, dan Notifications.
+
+================================
+1. Halaman Utama (Home Page - Admin)
+================================
+
+FUNGSI:
+- Berfungsi sebagai dashboard utama untuk memantau penjualan harian dan menyediakan akses cepat ke menu manajemen.
+- Menampilkan statistik singkat penjualan film dan add-on.
+- Tombol "[Lihat Detail Penjualan]" akan mengarahkan ke Sales Page.
+- Tombol "[Kelola]" pada daftar film akan mengarahkan ke Cinema Management Page.
+
+TATA LETAK VISUAL:
+- Bagian Statistik Penjualan ("🔢 Statistik Penjualan")  menampilkan:
+    - Total tiket terjual hari ini.
+    - Pie chart untuk distribusi film.
+    - Line chart untuk tren penjualan harian.
+    - Tombol "[Lihat Detail Penjualan]".
+- Bagian Film Sedang Tayang ("🎞️ Film Sedang Tayang")  menampilkan daftar film dalam tabel berisi Judul Film, Jam Tayang, dan tombol "Kelola".
+
+
+================================
+2. Halaman Penjualan (Sales Page)
+================================
+
+FUNGSI:
+- Menyajikan analisis data dan tren penjualan tiket serta add-on secara lebih mendalam.
+- Tombol "[Database Penjualan]" akan mengarahkan ke Sales Database Page.
+
+TATA LETAK VISUAL:
+- Judul halaman adalah "📊 Statistik Penjualan Mendetail".
+- Halaman berisi kombinasi grafik untuk analisis, seperti:
+    - Bar chart untuk penjualan tiket per film.
+    - Pie chart untuk add-on terlaris.
+    - Line graph untuk tren harian/mingguan.
+- Terdapat tombol navigasi "[← Kembali ke Home]" dan "[Lihat Database Penjualan]".
+
+
+================================
+3. Halaman Database Penjualan (Sales Database Page)
+================================
+
+FUNGSI:
+- Menampilkan arsip riwayat penjualan yang dikelompokkan berdasarkan periode mingguan untuk memudahkan penelusuran.
+- Admin dapat mengklik salah satu segmen mingguan untuk melihat detailnya di Sales Database Table Page.
+
+TATA LETAK VISUAL:
+- Judul halaman adalah "📅 Riwayat Penjualan per Minggu".
+- Konten utama adalah daftar segmen riwayat penjualan per minggu (contoh: "[🗓️ Riwayat Pemesanan Tiket 01/06/2025]").
+- Terdapat tombol "[← Kembali ke Sales Page]".
+
+
+================================
+4. Halaman Tabel Database Penjualan (Sales Database Table Page)
+================================
+
+FUNGSI:
+- Menampilkan tabel data penjualan detail dari periode mingguan yang dipilih.
+- Dilengkapi dengan fitur untuk memfilter data berdasarkan add-on, film, jam tayang, username, dan waktu pemesanan.
+
+TATA LETAK VISUAL:
+- Terdapat bagian "🔍 Filter Penjualan" di atas tabel.
+- Tabel data ("📋 Tabel Data")  menampilkan kolom: Username, Film, Jam, Kursi, Add-on, dan Waktu.
+- Terdapat tombol "[← Kembali ke Sales Database]".
+
+
+================================
+5. Halaman Manajemen Bioskop (Cinema Management Page)
+================================
+
+FUNGSI:
+- Berfungsi sebagai pusat kontrol operasional bioskop, mulai dari pengaturan harga hingga manajemen daftar film.
+- Admin dapat mengatur harga tiket default (hari biasa) dan harga custom (akhir pekan/libur).
+- Mengklik salah satu film pada daftar akan mengarahkan ke Movie Page untuk mengedit film tersebut.
+- Tombol "[Tambah Film Baru]" akan mengarahkan ke Movie Page untuk menambah film baru.
+
+TATA LETAK VISUAL:
+- Bagian 1: Pengaturan Harga Tiket.
+- Bagian 2: Daftar Film Tayang, menampilkan Judul Film dan Jam Tayang.
+- Bagian 3: Tombol Navigasi, termasuk "[Tambah Film Baru]" dan "[Kembali]".
+
+
+================================
+6. Halaman Film (Movie Page - Admin)
+================================
+
+FUNGSI:
+- Halaman untuk mengelola informasi detail film, baik menambah, mengedit, maupun menghapus film.
+- Skenario 1 (Mengedit): Halaman menampilkan form yang sudah terisi dengan detail film yang dapat diubah (judul, deskripsi, jam tayang, studio). Terdapat juga opsi untuk menghapus film.
+- Skenario 2 (Menambah): Halaman menampilkan form kosong untuk diisi dengan informasi film baru.
+- Tombol "[Kembali]" akan mengarahkan admin kembali ke Cinema Management Page.

@@ -1,0 +1,10 @@
+[
+  { "SeatID": 1, "StudioID": 1, "SeatNumber": "A1", "RowNumber": "A", "IsActive": true },
+  { "SeatID": 2, "StudioID": 1, "SeatNumber": "A2", "RowNumber": "A", "IsActive": true },
+  { "SeatID": 3, "StudioID": 1, "SeatNumber": "B1", "RowNumber": "B", "IsActive": true },
+  { "SeatID": 4, "StudioID": 1, "SeatNumber": "B2", "RowNumber": "B", "IsActive": true },
+  { "SeatID": 5, "StudioID": 2, "SeatNumber": "A1", "RowNumber": "A", "IsActive": true },
+  { "SeatID": 6, "StudioID": 2, "SeatNumber": "A2", "RowNumber": "A", "IsActive": true },
+  { "SeatID": 7, "StudioID": 2, "SeatNumber": "B1", "RowNumber": "B", "IsActive": true },
+  { "SeatID": 8, "StudioID": 2, "SeatNumber": "B2", "RowNumber": "B", "IsActive": true }
+] 
