@@ -20,6 +20,9 @@ const MovieDetail: React.FC = () => {
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showtimes, setShowtimes] = useState<any[]>([]);
+  const [showtimesLoading, setShowtimesLoading] = useState(true);
+  const [showtimesError, setShowtimesError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -34,6 +37,20 @@ const MovieDetail: React.FC = () => {
         console.error('Error fetching movie:', err);
         setError('Failed to load movie details');
         setLoading(false);
+      });
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    setShowtimesLoading(true);
+    api.get(`/showtimes/movie/${id}`)
+      .then(res => {
+        setShowtimes(res.data);
+        setShowtimesLoading(false);
+      })
+      .catch(err => {
+        setShowtimesError('Failed to load showtimes');
+        setShowtimesLoading(false);
       });
   }, [id]);
 
@@ -166,40 +183,31 @@ const MovieDetail: React.FC = () => {
                 {/* Showtimes Section */}
                 <div className="w-full md:w-72">
                   <h2 className="text-xl font-semibold mb-4 text-white">Available Shows</h2>
-                  <div className="space-y-3">
-                    <Link
-                      to={`/seat-order?movieId=${movie.movieId}&showtimeId=1`}
-                      className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                      <div>
-                        <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">13:00</div>
-                        <div className="text-sm text-gray-400">Studio 1</div>
-                      </div>
-                      <div className="text-sm text-yellow-500">Book Now</div>
-                    </Link>
-                    
-                    <Link
-                      to={`/seat-order?movieId=${movie.movieId}&showtimeId=2`}
-                      className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                      <div>
-                        <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">16:00</div>
-                        <div className="text-sm text-gray-400">Studio 1</div>
-                      </div>
-                      <div className="text-sm text-yellow-500">Book Now</div>
-                    </Link>
-                    
-                    <Link
-                      to={`/seat-order?movieId=${movie.movieId}&showtimeId=3`}
-                      className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                      <div>
-                        <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">19:00</div>
-                        <div className="text-sm text-gray-400">Studio 1</div>
-                      </div>
-                      <div className="text-sm text-yellow-500">Book Now</div>
-                    </Link>
-                  </div>
+                  {showtimesLoading ? (
+                    <div className="text-gray-400">Loading showtimes...</div>
+                  ) : showtimesError ? (
+                    <div className="text-red-400">{showtimesError}</div>
+                  ) : showtimes.length === 0 ? (
+                    <div className="text-gray-400">No showtimes available for this movie.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {showtimes.map(st => (
+                        <Link
+                          key={st.showtimeId}
+                          to={`/seat-order?movieId=${movie.movieId}&showtimeId=${st.showtimeId}`}
+                          className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
+                        >
+                          <div>
+                            <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">
+                              {new Date(st.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <div className="text-sm text-gray-400">Studio {st.studioId}</div>
+                          </div>
+                          <div className="text-sm text-yellow-500">Book Now</div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

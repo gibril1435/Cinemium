@@ -51,7 +51,7 @@ const CinemaManagement: React.FC = () => {
           break;
         }
         case 'studios': {
-          const response = await authFetch('/studios');
+          const response = await authFetch('/api/admin/studios');
           if (!response.ok) throw new Error('Failed to fetch studios');
           const data = await response.json();
           setStudios(data.map((studio: any) => ({ ...studio, id: studio.studioId })));

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { readTable, writeTable } = require('../utils/jsonDb');
+const { isAdmin } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -42,6 +43,9 @@ const { readTable, writeTable } = require('../utils/jsonDb');
  *         description: Unauthorized
  */
 
+// Apply admin middleware to all routes
+router.use(isAdmin);
+
 // Get all studios
 router.get('/', (req, res) => {
   const studios = readTable('Studios');
@@ -51,7 +55,7 @@ router.get('/', (req, res) => {
 // Get a studio by ID
 router.get('/:id', (req, res) => {
   const studios = readTable('Studios');
-  const studio = studios.find(s => s.studioId == req.params.id);
+  const studio = studios.find(s => s.studioId === req.params.id);
   if (!studio) return res.status(404).json({ error: 'Studio not found' });
   res.json(studio);
 });
@@ -69,7 +73,7 @@ router.post('/', (req, res) => {
 // Update a studio
 router.put('/:id', (req, res) => {
   const studios = readTable('Studios');
-  const idx = studios.findIndex(s => s.studioId == req.params.id);
+  const idx = studios.findIndex(s => s.studioId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Studio not found' });
   studios[idx] = { ...studios[idx], ...req.body };
   writeTable('Studios', studios);
@@ -79,7 +83,7 @@ router.put('/:id', (req, res) => {
 // Delete a studio
 router.delete('/:id', (req, res) => {
   let studios = readTable('Studios');
-  const idx = studios.findIndex(s => s.studioId == req.params.id);
+  const idx = studios.findIndex(s => s.studioId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Studio not found' });
   const deleted = studios.splice(idx, 1)[0];
   writeTable('Studios', studios);

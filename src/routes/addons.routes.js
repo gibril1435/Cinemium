@@ -41,7 +41,7 @@ router.use(isAdmin);
 // Get an add-on by ID
 router.get('/:id', (req, res) => {
   const addons = readTable('AddOns');
-  const addon = addons.find(a => a.addOnId == req.params.id);
+  const addon = addons.find(a => a.addOnId === req.params.id);
   if (!addon) return res.status(404).json({ error: 'AddOn not found' });
   res.json(addon);
 });
@@ -59,7 +59,7 @@ router.post('/', (req, res) => {
 // Update an add-on
 router.put('/:id', (req, res) => {
   const addons = readTable('AddOns');
-  const idx = addons.findIndex(a => a.addOnId == req.params.id);
+  const idx = addons.findIndex(a => a.addOnId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'AddOn not found' });
   addons[idx] = { ...addons[idx], ...req.body };
   writeTable('AddOns', addons);
@@ -69,7 +69,7 @@ router.put('/:id', (req, res) => {
 // Delete an add-on
 router.delete('/:id', (req, res) => {
   let addons = readTable('AddOns');
-  const idx = addons.findIndex(a => a.addOnId == req.params.id);
+  const idx = addons.findIndex(a => a.addOnId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'AddOn not found' });
   const deleted = addons.splice(idx, 1)[0];
   writeTable('AddOns', addons);

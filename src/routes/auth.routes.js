@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { readTable, writeTable } = require('../utils/jsonDb');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, isAdmin } = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
@@ -37,28 +37,61 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
  */
 
 // Register
-router.post('/register', (req, res) => {
-  const { username, email, password, role } = req.body;
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required' });
+router.post('/register', (req, res, next) => {
+  try {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return next({ status: 400, error: 'Validation Error', message: 'All fields are required' });
+    }
+    const users = readTable('Users');
+    if (users.find(u => u.email === email)) {
+      return next({ status: 400, error: 'Validation Error', message: 'Email already registered' });
+    }
+    const newId = users.length ? Math.max(...users.map(u => u.userId)) + 1 : 1;
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const newUser = {
+      userId: newId,
+      username,
+      email,
+      password: hashedPassword,
+      role: 'customer',
+      createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    writeTable('Users', users);
+    res.status(201).json({ message: 'User registered successfully', user: { ...newUser, password: undefined } });
+  } catch (err) {
+    next(err);
   }
-  const users = readTable('Users');
-  if (users.find(u => u.email === email)) {
-    return res.status(400).json({ error: 'Email already registered' });
+});
+
+// Register Admin (admin only)
+router.post('/register-admin', authenticate, isAdmin, (req, res, next) => {
+  try {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return next({ status: 400, error: 'Validation Error', message: 'All fields are required' });
+    }
+    const users = readTable('Users');
+    if (users.find(u => u.email === email)) {
+      return next({ status: 400, error: 'Validation Error', message: 'Email already registered' });
+    }
+    const newId = users.length ? Math.max(...users.map(u => u.userId)) + 1 : 1;
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const newUser = {
+      userId: newId,
+      username,
+      email,
+      password: hashedPassword,
+      role: 'admin',
+      createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    writeTable('Users', users);
+    res.status(201).json({ message: 'Admin user registered successfully', user: { ...newUser, password: undefined } });
+  } catch (err) {
+    next(err);
   }
-  const newId = users.length ? Math.max(...users.map(u => u.userId)) + 1 : 1;
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  const newUser = {
-    userId: newId,
-    username,
-    email,
-    password: hashedPassword,
-    role: role || 'customer',
-    createdAt: new Date().toISOString()
-  };
-  users.push(newUser);
-  writeTable('Users', users);
-  res.status(201).json({ message: 'User registered successfully', user: { ...newUser, password: undefined } });
 });
 
 /**

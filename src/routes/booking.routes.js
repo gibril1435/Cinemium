@@ -32,17 +32,24 @@ const { generateTicketPDF } = require('../utils/pdfGenerator');
 router.get('/showtimes/:showtimeId/seats', (req, res) => {
   try {
     const showtimes = readTable('Showtimes');
-    const showtime = showtimes.find(s => s.showtimeId == req.params.showtimeId);
+    const showtime = showtimes.find(s => s.showtimeId === req.params.showtimeId || s.showtimeId === Number(req.params.showtimeId));
     if (!showtime) {
       return res.status(404).json({
         error: 'Not Found',
         message: 'Showtime not found'
       });
     }
-    // Create 8x5 seat layout
-    const rows = ['A', 'B', 'C', 'D', 'E'];
-    const columns = [1, 2, 3, 4, 5, 6, 7, 8];
-    // Get reserved seats from BookingSeats (handle empty, missing, or invalid file)
+    const studios = readTable('Studios');
+    const studio = studios.find(s => s.studioId === showtime.studioId || s.studioId === Number(showtime.studioId));
+    if (!studio) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Studio not found for this showtime'
+      });
+    }
+    const allSeats = readTable('Seats');
+    const studioSeats = allSeats.filter(seat => seat.studioId === studio.studioId);
+    // Get reserved seats for this showtime
     let bookingSeats = [];
     try {
       bookingSeats = readTable('BookingSeats');
@@ -50,31 +57,29 @@ router.get('/showtimes/:showtimeId/seats', (req, res) => {
     } catch (e) {
       bookingSeats = [];
     }
-    // Defensive: filter only valid objects with showtimeId and seatNumber
     const reservedSeats = new Set(
       bookingSeats && Array.isArray(bookingSeats)
-        ? bookingSeats.filter(bs => bs && bs.showtimeId == req.params.showtimeId && bs.seatNumber)
+        ? bookingSeats.filter(bs => (bs && (bs.showtimeId === req.params.showtimeId || bs.showtimeId === Number(req.params.showtimeId)) && bs.seatNumber))
             .map(bs => bs.seatNumber)
         : []
     );
-    const seats = [];
-    for (const row of rows) {
-      for (const col of columns) {
-        const seatId = `${row}${col}`;
-        seats.push({
-          id: seatId,
-          label: seatId,
-          available: !reservedSeats.has(seatId)
-        });
-      }
-    }
+    // Build seat objects with availability
+    const seats = studioSeats.map(seat => ({
+      id: seat.seatId,
+      label: seat.seatNumber,
+      row: seat.rowNumber,
+      available: seat.isActive && !reservedSeats.has(seat.seatNumber)
+    }));
+    // Get unique rows and columns
+    const rowLabels = [...new Set(seats.map(seat => seat.row))];
+    const columnLabels = [...new Set(seats.map(seat => seat.label.replace(/^[A-Z]/, '')))].sort((a, b) => Number(a) - Number(b));
     const movies = readTable('Movies');
-    const movie = movies.find(m => m.movieId == showtime.movieId);
+    const movie = movies.find(m => m.movieId === showtime.movieId);
     res.json({
       showtimeId: showtime.showtimeId,
       movieTitle: movie ? movie.title : 'Unknown Movie',
       showTime: showtime.showDateTime,
-      layout: { rows, columns, seats }
+      layout: { rows: rowLabels, columns: columnLabels, seats }
     });
   } catch (error) {
     console.error('Error fetching seat layout:', error);
@@ -166,15 +171,45 @@ router.post('/transactions', authenticate, async (req, res) => {
       });
     }
     
-    // Calculate total amount
-    let totalAmount = seats.length * showtime.price;
+    // Calculate dynamic ticket price for the showtime date
+    const ticketPrices = readTable('TicketPrices');
+    const showDate = new Date(showtime.showDateTime);
+    let applicablePrice = null;
+    for (const price of ticketPrices) {
+      const startDate = price.startDate ? new Date(price.startDate) : null;
+      const endDate = price.endDate ? new Date(price.endDate) : null;
+      // Check if date falls within range
+      if (startDate && endDate) {
+        if (showDate >= startDate && showDate <= endDate) {
+          applicablePrice = price;
+          break;
+        }
+      } else if (startDate && !endDate) {
+        if (showDate >= startDate) {
+          applicablePrice = price;
+          break;
+        }
+      } else if (!startDate && !endDate) {
+        // Default price
+        applicablePrice = price;
+        break;
+      }
+    }
+    if (!applicablePrice) {
+      return res.status(400).json({
+        error: 'Pricing Error',
+        message: 'No applicable ticket price found for this date.'
+      });
+    }
+    // Calculate total amount using dynamic price
+    let totalAmount = seats.length * applicablePrice.price;
     const addOnItems = [];
     
     if (addOns && addOns.length > 0) {
       const allAddOns = readTable('AddOns');
       
       for (const addOn of addOns) {
-        const addOnItem = allAddOns.find(item => item.addOnId == addOn.id);
+        const addOnItem = allAddOns.find(item => item.addOnId === addOn.id);
         if (addOnItem) {
           totalAmount += addOnItem.price * addOn.quantity;
           addOnItems.push({ ...addOnItem, quantity: addOn.quantity });
@@ -228,11 +263,6 @@ router.post('/transactions', authenticate, async (req, res) => {
           addOnId: addOn.addOnId,
           quantity: addOn.quantity,
           unitPrice: addOn.price,
-          AddOnSaleID: newAddOnSaleId,
-          BookingID: newBookingId,
-          AddOnID: addOn.AddOnID,
-          Quantity: addOn.quantity,
-          UnitPrice: addOn.price,
           TotalPrice: addOn.price * addOn.quantity
         };
       });
@@ -244,7 +274,7 @@ router.post('/transactions', authenticate, async (req, res) => {
     // Generate QR codes for tickets
     const tickets = await Promise.all(seats.map(async (seatNumber) => {
       const movies = readTable('Movies');
-      const movie = movies.find(m => m.movieId == showtime.movieId);
+      const movie = movies.find(m => m.movieId === showtime.movieId);
       
       const qrCode = await QRCode.toDataURL(JSON.stringify({
         bookingId: newBookingId,
@@ -330,17 +360,17 @@ router.get('/history', authenticate, (req, res) => {
     
     // Strict equality comparison and ensure userId exists in booking
     const userBookings = bookings
-      .filter(b => b.userId && b.userId === userId)
+      .filter(b => b.userId === userId)
       .map(booking => {
-        const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
-        const movie = movies.find(m => m.movieId == showtime?.movieId);
+        const showtime = showtimes.find(s => s.showtimeId === booking.showtimeId);
+        const movie = movies.find(m => m.movieId === showtime?.movieId);
         const seats = bookingSeats
-          .filter(bs => bs.bookingId == booking.bookingId)
+          .filter(bs => bs.bookingId === booking.bookingId)
           .map(bs => bs.seatNumber);
         const bookingAddOns = addOnSales
-          .filter(aos => aos.bookingId == booking.bookingId)
+          .filter(aos => aos.bookingId === booking.bookingId)
           .map(aos => {
-            const addOn = addOns.find(a => a.addOnId == aos.addOnId);
+            const addOn = addOns.find(a => a.addOnId === aos.addOnId);
             return {
               name: addOn ? addOn.name : 'Unknown Add-on',
               quantity: aos.quantity,
@@ -386,7 +416,7 @@ router.get('/:bookingId', authenticate, (req, res) => {
     }
     
     const bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
+    const booking = bookings.find(b => b.bookingId === req.params.bookingId && b.userId === userId);
     
     if (!booking) {
       return res.status(404).json({
@@ -401,15 +431,15 @@ router.get('/:bookingId', authenticate, (req, res) => {
     const addOnSales = readTable('AddOnSales');
     const addOns = readTable('AddOns');
     
-    const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
-    const movie = movies.find(m => m.movieId == showtime?.movieId);
+    const showtime = showtimes.find(s => s.showtimeId === booking.showtimeId);
+    const movie = movies.find(m => m.movieId === showtime?.movieId);
     const seats = bookingSeats
-      .filter(bs => bs.bookingId == booking.bookingId)
+      .filter(bs => bs.bookingId === booking.bookingId)
       .map(bs => bs.seatNumber);
     const bookingAddOns = addOnSales
-      .filter(aos => aos.bookingId == booking.bookingId)
+      .filter(aos => aos.bookingId === booking.bookingId)
       .map(aos => {
-        const addOn = addOns.find(a => a.addOnId == aos.addOnId);
+        const addOn = addOns.find(a => a.addOnId === aos.addOnId);
         return {
           name: addOn ? addOn.name : 'Unknown Add-on',
           quantity: aos.quantity,
@@ -456,7 +486,7 @@ router.delete('/:bookingId', authenticate, (req, res) => {
     }
     
     let bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
+    const booking = bookings.find(b => b.bookingId === req.params.bookingId && b.userId === userId);
     
     if (!booking) {
       return res.status(404).json({
@@ -467,7 +497,7 @@ router.delete('/:bookingId', authenticate, (req, res) => {
     
     // Check if booking can be cancelled (e.g., not within 2 hours of showtime)
     const showtimes = readTable('Showtimes');
-    const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
+    const showtime = showtimes.find(s => s.showtimeId === booking.showtimeId);
     if (showtime) {
       const showtimeDate = new Date(showtime.showDateTime);
       const now = new Date();
@@ -482,18 +512,18 @@ router.delete('/:bookingId', authenticate, (req, res) => {
     }
     
     // Update booking status
-    const bookingIndex = bookings.findIndex(b => b.bookingId == req.params.bookingId);
+    const bookingIndex = bookings.findIndex(b => b.bookingId === req.params.bookingId);
     bookings[bookingIndex].status = 'cancelled';
     writeTable('Bookings', bookings);
     
     // Remove booking seats
     let bookingSeats = readTable('BookingSeats');
-    bookingSeats = bookingSeats.filter(bs => bs.bookingId != req.params.bookingId);
+    bookingSeats = bookingSeats.filter(bs => bs.bookingId !== req.params.bookingId);
     writeTable('BookingSeats', bookingSeats);
     
     // Remove add-on sales
     let addOnSales = readTable('AddOnSales');
-    addOnSales = addOnSales.filter(aos => aos.bookingId != req.params.bookingId);
+    addOnSales = addOnSales.filter(aos => aos.bookingId !== req.params.bookingId);
     writeTable('AddOnSales', addOnSales);
     
     res.json({
@@ -523,7 +553,7 @@ router.get('/:bookingId/ticket', authenticate, async (req, res) => {
     }
     
     const bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
+    const booking = bookings.find(b => b.bookingId === req.params.bookingId && b.userId === userId);
     
     if (!booking) {
       return res.status(404).json({
@@ -538,12 +568,12 @@ router.get('/:bookingId/ticket', authenticate, async (req, res) => {
     const users = readTable('Users');
     const studios = readTable('Studios');
     
-    const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
-    const movie = movies.find(m => m.movieId == showtime?.movieId);
-    const user = users.find(u => u.userId == userId);
-    const studio = studios.find(s => s.studioId == showtime?.studioId);
+    const showtime = showtimes.find(s => s.showtimeId === booking.showtimeId);
+    const movie = movies.find(m => m.movieId === showtime?.movieId);
+    const user = users.find(u => u.userId === userId);
+    const studio = studios.find(s => s.studioId === showtime?.studioId);
     const seats = bookingSeats
-      .filter(bs => bs.bookingId == booking.bookingId)
+      .filter(bs => bs.bookingId === booking.bookingId)
       .map(bs => bs.seatNumber);
 
     // Generate QR code
@@ -582,7 +612,7 @@ router.get('/:bookingId/ticket', authenticate, async (req, res) => {
 // Public: Get showtime details by ID
 router.get('/showtimes/:showtimeId', (req, res) => {
   const showtimes = readTable('Showtimes');
-  const showtime = showtimes.find(s => s.showtimeId == req.params.showtimeId);
+  const showtime = showtimes.find(s => s.showtimeId === req.params.showtimeId);
   if (!showtime) {
     return res.status(404).json({ message: 'Not Found' });
   }

@@ -27,7 +27,7 @@ export default function Bookings() {
 
   const fetchBookings = async () => {
     try {
-      const response = await authFetch('/bookings');
+      const response = await authFetch('/api/admin/bookings');
       if (!response.ok) throw new Error('Failed to fetch bookings');
       const data = await response.json();
       // Map backend bookingId to id for frontend
@@ -51,7 +51,7 @@ export default function Bookings() {
     if (window.confirm('Are you sure you want to cancel this booking?')) {
       try {
         // Update booking status to 'cancelled'
-        const response = await authFetch(`/bookings/${bookingId}`, {
+        const response = await authFetch(`/api/admin/bookings/${bookingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'cancelled' }),

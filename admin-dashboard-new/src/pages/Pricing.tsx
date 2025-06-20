@@ -34,7 +34,7 @@ export default function Pricing() {
 
   const fetchPrices = async () => {
     try {
-      const response = await authFetch('/ticketPrice');
+      const response = await authFetch('/api/admin/prices');
       if (!response.ok) throw new Error('Failed to fetch prices');
       const data = await response.json();
       setPrices(data);
@@ -55,7 +55,7 @@ export default function Pricing() {
       };
       if (selectedPrice) {
         // Update price
-        const response = await authFetch(`/ticketPrice/${selectedPrice.id}`, {
+        const response = await authFetch(`/api/admin/prices/${selectedPrice.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(priceData),
@@ -63,7 +63,7 @@ export default function Pricing() {
         if (!response.ok) throw new Error('Failed to update price');
       } else {
         // Create price
-        const response = await authFetch('/ticketPrice', {
+        const response = await authFetch('/api/admin/prices', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(priceData),
@@ -94,7 +94,7 @@ export default function Pricing() {
   const handleDelete = async (priceId: number) => {
     if (window.confirm('Are you sure you want to delete this price?')) {
       try {
-        const response = await authFetch(`/ticketPrice/${priceId}`, {
+        const response = await authFetch(`/api/admin/prices/${priceId}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete price');

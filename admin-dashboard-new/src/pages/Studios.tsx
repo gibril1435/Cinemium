@@ -38,7 +38,7 @@ export default function Studios() {
 
   const fetchStudios = async () => {
     try {
-      const response = await authFetch('/studios');
+      const response = await authFetch('/api/admin/studios');
       if (!response.ok) throw new Error('Failed to fetch studios');
       const data = await response.json();
       // Map backend studioId to id for frontend
@@ -73,7 +73,7 @@ export default function Studios() {
       };
       if (selectedStudio) {
         // Update studio
-        const response = await authFetch(`/studios/${selectedStudio.id}`, {
+        const response = await authFetch(`/api/admin/studios/${selectedStudio.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -81,7 +81,7 @@ export default function Studios() {
         if (!response.ok) throw new Error('Failed to update studio');
       } else {
         // Create studio
-        const response = await authFetch('/studios', {
+        const response = await authFetch('/api/admin/studios', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -110,7 +110,7 @@ export default function Studios() {
   const handleDelete = async (studioId: number) => {
     if (window.confirm('Are you sure you want to delete this studio?')) {
       try {
-        const response = await authFetch(`/studios/${studioId}`, {
+        const response = await authFetch(`/api/admin/studios/${studioId}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete studio');

@@ -24,7 +24,7 @@ const Sales: React.FC = () => {
   const fetchSalesData = useCallback(async () => {
     try {
       const params = new URLSearchParams(dateRange as any).toString();
-      const response = await authFetch(`/admin/sales/weeks${params ? `?${params}` : ''}`);
+      const response = await authFetch(`/api/admin/dashboard?report=weeklySales${params ? `&${params}` : ''}`);
       if (!response.ok) throw new Error('Failed to load sales data');
       const data = await response.json();
       setSalesData(data);

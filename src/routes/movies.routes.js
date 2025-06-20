@@ -213,7 +213,7 @@ router.get('/', (req, res) => {
 // Get a movie by ID
 router.get('/:id', (req, res) => {
   const movies = readTable('Movies');
-  const movie = movies.find(m => m.movieId == req.params.id);
+  const movie = movies.find(m => m.movieId === req.params.id);
   if (!movie) return res.status(404).json({ error: 'Movie not found' });
   res.json(movie);
 });
@@ -232,7 +232,7 @@ router.post('/', isAdmin, (req, res) => {
 // Update a movie
 router.put('/:id', isAdmin, (req, res) => {
   const movies = readTable('Movies');
-  const idx = movies.findIndex(m => m.MovieID == req.params.id);
+  const idx = movies.findIndex(m => m.MovieID === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
   movies[idx] = { ...movies[idx], ...req.body };
   writeTable('Movies', movies);
@@ -242,7 +242,7 @@ router.put('/:id', isAdmin, (req, res) => {
 // Delete a movie
 router.delete('/:id', isAdmin, (req, res) => {
   let movies = readTable('Movies');
-  const idx = movies.findIndex(m => m.MovieID == req.params.id);
+  const idx = movies.findIndex(m => m.MovieID === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
   const deleted = movies.splice(idx, 1)[0];
   writeTable('Movies', movies);

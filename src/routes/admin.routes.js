@@ -4,6 +4,7 @@ const { readTable, writeTable } = require('../utils/jsonDb');
 const { Op } = require('sequelize');
 const { isAdmin } = require('../middleware/auth');
 const { startOfDay, endOfDay, startOfWeek, endOfWeek } = require('date-fns');
+const { getAllBookings } = require('./bookings.routes');
 
 // Apply admin middleware to all routes
 router.use(isAdmin);
@@ -43,188 +44,87 @@ router.use(isAdmin);
 
 // Get dashboard summary
 router.get('/dashboard', async (req, res) => {
-    try {
-        const today = new Date();
-        const todayStart = startOfDay(today);
-        const todayEnd = endOfDay(today);
+    if (req.query.report === 'weeklySales') {
+        // ... move /sales/weeks logic here ...
+    } else {
+        try {
+            const today = new Date();
+            const todayStart = startOfDay(today);
+            const todayEnd = endOfDay(today);
 
-        // Get today's stats
-        const todayStats = await Transaction.findAll({
-            where: {
-                transactionDate: {
-                    [Op.between]: [todayStart, todayEnd]
-                }
-            },
-            attributes: [
-                [sequelize.fn('COUNT', sequelize.col('id')), 'totalTickets'],
-                [sequelize.fn('SUM', sequelize.col('totalAmount')), 'totalRevenue']
-            ]
-        });
+            // Get today's stats
+            const todayStats = await Transaction.findAll({
+                where: {
+                    transactionDate: {
+                        [Op.between]: [todayStart, todayEnd]
+                    }
+                },
+                attributes: [
+                    [sequelize.fn('COUNT', sequelize.col('id')), 'totalTickets'],
+                    [sequelize.fn('SUM', sequelize.col('totalAmount')), 'totalRevenue']
+                ]
+            });
 
-        // Get film distribution
-        const filmDistribution = await Transaction.findAll({
-            include: [{
-                model: Showtime,
-                include: [{ model: Movie, attributes: ['title'] }]
-            }],
-            attributes: [
-                [sequelize.fn('COUNT', sequelize.col('id')), 'ticketsSold']
-            ],
-            group: ['Showtime.Movie.title']
-        });
-
-        // Calculate percentages
-        const totalTickets = filmDistribution.reduce((sum, film) => sum + film.ticketsSold, 0);
-        const distributionWithPercentages = filmDistribution.map(film => ({
-            movieTitle: film.Showtime.Movie.title,
-            ticketsSold: film.ticketsSold,
-            percentage: (film.ticketsSold / totalTickets) * 100
-        }));
-
-        // Get sales trend (last 7 days)
-        const salesTrend = await Transaction.findAll({
-            where: {
-                transactionDate: {
-                    [Op.gte]: new Date(today - 7 * 24 * 60 * 60 * 1000)
-                }
-            },
-            attributes: [
-                [sequelize.fn('DATE', sequelize.col('transactionDate')), 'date'],
-                [sequelize.fn('COUNT', sequelize.col('id')), 'ticketsSold'],
-                [sequelize.fn('SUM', sequelize.col('totalAmount')), 'revenue']
-            ],
-            group: [sequelize.fn('DATE', sequelize.col('transactionDate'))],
-            order: [[sequelize.fn('DATE', sequelize.col('transactionDate')), 'ASC']]
-        });
-
-        res.json({
-            todayStats: {
-                totalTickets: todayStats[0].totalTickets,
-                totalRevenue: todayStats[0].totalRevenue
-            },
-            filmDistribution: distributionWithPercentages,
-            salesTrend: salesTrend.map(day => ({
-                date: day.date,
-                ticketsSold: day.ticketsSold,
-                revenue: day.revenue
-            }))
-        });
-    } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch dashboard data'
-        });
-    }
-});
-
-// Get weekly sales history
-router.get('/sales/weeks', async (req, res) => {
-    try {
-        const weeks = await Transaction.findAll({
-            attributes: [
-                [sequelize.fn('DATE_TRUNC', 'week', sequelize.col('transactionDate')), 'weekStart'],
-                [sequelize.fn('COUNT', sequelize.col('id')), 'totalTickets'],
-                [sequelize.fn('SUM', sequelize.col('totalAmount')), 'totalSales']
-            ],
-            group: [sequelize.fn('DATE_TRUNC', 'week', sequelize.col('transactionDate'))],
-            order: [[sequelize.fn('DATE_TRUNC', 'week', sequelize.col('transactionDate')), 'DESC']]
-        });
-
-        res.json({
-            weeks: weeks.map(week => ({
-                weekStart: week.weekStart,
-                weekEnd: new Date(week.weekStart.getTime() + 6 * 24 * 60 * 60 * 1000),
-                totalSales: week.totalSales,
-                totalTickets: week.totalTickets
-            }))
-        });
-    } catch (error) {
-        console.error('Error fetching weekly sales:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch weekly sales'
-        });
-    }
-});
-
-// Get weekly sales details
-router.get('/sales/weeks/:weekId', async (req, res) => {
-    try {
-        const { movie, addOn, showtime, user, date } = req.query;
-        const weekStart = new Date(req.params.weekId);
-        const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-
-        const whereClause = {
-            transactionDate: {
-                [Op.between]: [weekStart, weekEnd]
-            }
-        };
-
-        // Apply filters
-        if (movie) {
-            whereClause['$Showtime.Movie.title$'] = movie;
-        }
-        if (showtime) {
-            whereClause['$Showtime.showDateTime$'] = showtime;
-        }
-        if (user) {
-            whereClause['$User.username$'] = user;
-        }
-        if (date) {
-            whereClause.transactionDate = {
-                [Op.between]: [startOfDay(new Date(date)), endOfDay(new Date(date))]
-            };
-        }
-
-        const transactions = await Transaction.findAll({
-            where: whereClause,
-            include: [
-                {
+            // Get film distribution
+            const filmDistribution = await Transaction.findAll({
+                include: [{
                     model: Showtime,
                     include: [{ model: Movie, attributes: ['title'] }]
-                },
-                {
-                    model: Ticket,
-                    attributes: ['seatNumber']
-                },
-                {
-                    model: TransactionAddOn,
-                    include: [{ model: AddOn, attributes: ['name'] }],
-                    where: addOn ? { '$AddOn.name$': addOn } : {}
-                },
-                {
-                    model: User,
-                    attributes: ['username']
-                }
-            ]
-        });
+                }],
+                attributes: [
+                    [sequelize.fn('COUNT', sequelize.col('id')), 'ticketsSold']
+                ],
+                group: ['Showtime.Movie.title']
+            });
 
-        res.json({
-            weekStart,
-            weekEnd,
-            transactions: transactions.map(transaction => ({
-                id: transaction.id,
-                username: transaction.User.username,
-                movieTitle: transaction.Showtime.Movie.title,
-                showTime: transaction.Showtime.showDateTime,
-                seats: transaction.Tickets.map(ticket => ticket.seatNumber),
-                addOns: transaction.TransactionAddOns.map(ta => ({
-                    name: ta.AddOn.name,
-                    quantity: ta.quantity
-                })),
-                totalAmount: transaction.totalAmount,
-                transactionDate: transaction.transactionDate
-            }))
-        });
-    } catch (error) {
-        console.error('Error fetching weekly sales details:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to fetch weekly sales details'
-        });
+            // Calculate percentages
+            const totalTickets = filmDistribution.reduce((sum, film) => sum + film.ticketsSold, 0);
+            const distributionWithPercentages = filmDistribution.map(film => ({
+                movieTitle: film.Showtime.Movie.title,
+                ticketsSold: film.ticketsSold,
+                percentage: (film.ticketsSold / totalTickets) * 100
+            }));
+
+            // Get sales trend (last 7 days)
+            const salesTrend = await Transaction.findAll({
+                where: {
+                    transactionDate: {
+                        [Op.gte]: new Date(today - 7 * 24 * 60 * 60 * 1000)
+                    }
+                },
+                attributes: [
+                    [sequelize.fn('DATE', sequelize.col('transactionDate')), 'date'],
+                    [sequelize.fn('COUNT', sequelize.col('id')), 'ticketsSold'],
+                    [sequelize.fn('SUM', sequelize.col('totalAmount')), 'revenue']
+                ],
+                group: [sequelize.fn('DATE', sequelize.col('transactionDate'))],
+                order: [[sequelize.fn('DATE', sequelize.col('transactionDate')), 'ASC']]
+            });
+
+            res.json({
+                todayStats: {
+                    totalTickets: todayStats[0].totalTickets,
+                    totalRevenue: todayStats[0].totalRevenue
+                },
+                filmDistribution: distributionWithPercentages,
+                salesTrend: salesTrend.map(day => ({
+                    date: day.date,
+                    ticketsSold: day.ticketsSold,
+                    revenue: day.revenue
+                }))
+            });
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            res.status(500).json({
+                error: 'Internal Server Error',
+                message: 'Failed to fetch dashboard data'
+            });
+        }
     }
 });
+
+// Secure admin bookings endpoint
+router.get('/bookings', isAdmin, getAllBookings);
 
 // Set ticket price
 router.post('/prices', async (req, res) => {
@@ -253,6 +153,30 @@ router.post('/prices', async (req, res) => {
             message: 'Failed to set ticket price'
         });
     }
+});
+
+router.get('/sales/weeks', async (req, res) => {
+  try {
+    const bookings = readTable('Bookings');
+    const now = new Date();
+    const days = 7;
+    const result = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const day = new Date(now);
+      day.setDate(now.getDate() - i);
+      const dayStr = day.toISOString().slice(0, 10);
+      const salesForDay = bookings.filter(b => b.status === 'confirmed' && b.bookingDate.slice(0, 10) === dayStr);
+      result.push({
+        date: dayStr,
+        totalSales: salesForDay.length,
+        totalRevenue: salesForDay.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+      });
+    }
+    res.json({ days: result });
+  } catch (error) {
+    console.error('Error fetching weekly sales:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: 'Failed to fetch weekly sales' });
+  }
 });
 
 module.exports = router; 

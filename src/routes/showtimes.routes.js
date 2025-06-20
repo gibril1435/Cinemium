@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { readTable, writeTable } = require('../utils/jsonDb');
+const { isAdmin } = require('../middleware/auth');
 
 // Get all showtimes
 router.get('/', (req, res) => {
@@ -11,13 +12,13 @@ router.get('/', (req, res) => {
 // Get a showtime by ID
 router.get('/:id', (req, res) => {
   const showtimes = readTable('Showtimes');
-  const showtime = showtimes.find(s => s.showtimeId == req.params.id);
+  const showtime = showtimes.find(s => s.showtimeId === req.params.id);
   if (!showtime) return res.status(404).json({ error: 'Showtime not found' });
   res.json(showtime);
 });
 
 // Create a new showtime
-router.post('/', (req, res) => {
+router.post('/', isAdmin, (req, res) => {
   const showtimes = readTable('Showtimes');
   const newId = showtimes.length ? Math.max(...showtimes.map(s => s.showtimeId)) + 1 : 1;
   const newShowtime = { ...req.body, showtimeId: newId };
@@ -27,9 +28,9 @@ router.post('/', (req, res) => {
 });
 
 // Update a showtime
-router.put('/:id', (req, res) => {
+router.put('/:id', isAdmin, (req, res) => {
   const showtimes = readTable('Showtimes');
-  const idx = showtimes.findIndex(s => s.showtimeId == req.params.id);
+  const idx = showtimes.findIndex(s => s.showtimeId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Showtime not found' });
   showtimes[idx] = { ...showtimes[idx], ...req.body };
   writeTable('Showtimes', showtimes);
@@ -37,13 +38,21 @@ router.put('/:id', (req, res) => {
 });
 
 // Delete a showtime
-router.delete('/:id', (req, res) => {
+router.delete('/:id', isAdmin, (req, res) => {
   let showtimes = readTable('Showtimes');
-  const idx = showtimes.findIndex(s => s.showtimeId == req.params.id);
+  const idx = showtimes.findIndex(s => s.showtimeId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Showtime not found' });
   const deleted = showtimes.splice(idx, 1)[0];
   writeTable('Showtimes', showtimes);
   res.json(deleted);
+});
+
+// Get all showtimes for a specific movieId
+router.get('/movie/:movieId', (req, res) => {
+  const showtimes = readTable('Showtimes');
+  const movieId = Number(req.params.movieId);
+  const filtered = showtimes.filter(s => s.movieId === movieId);
+  res.json(filtered);
 });
 
 module.exports = router; 

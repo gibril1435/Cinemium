@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
     let notifications = readTable('Notifications');
     
     // Filter by user ID
-    notifications = notifications.filter(n => n.userId == req.user.id);
+    notifications = notifications.filter(n => n.userId === req.user.userId);
     
     // Filter unread only if requested
     if (unreadOnly === 'true') {
@@ -77,7 +77,7 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const notifications = readTable('Notifications');
-    const notification = notifications.find(n => n.id == req.params.id && n.userId == req.user.id);
+    const notification = notifications.find(n => n.id === Number(req.params.id) && n.userId === req.user.userId);
     
     if (!notification) {
       return res.status(404).json({
@@ -104,7 +104,7 @@ router.post('/', (req, res) => {
     const newNotification = {
       ...req.body,
       id: newId,
-      userId: req.user.id,
+      userId: req.user.userId,
       createdAt: new Date().toISOString(),
       read: false
     };
@@ -125,7 +125,7 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const notifications = readTable('Notifications');
-    const idx = notifications.findIndex(n => n.id == req.params.id && n.userId == req.user.id);
+    const idx = notifications.findIndex(n => n.id === Number(req.params.id) && n.userId === req.user.userId);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -150,7 +150,7 @@ router.put('/:id', (req, res) => {
 router.patch('/:id/read', (req, res) => {
   try {
     const notifications = readTable('Notifications');
-    const idx = notifications.findIndex(n => n.id == req.params.id && n.userId == req.user.id);
+    const idx = notifications.findIndex(n => n.id === Number(req.params.id) && n.userId === req.user.userId);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -176,7 +176,7 @@ router.patch('/read-all', (req, res) => {
   try {
     const notifications = readTable('Notifications');
     const updated = notifications.map(n => 
-      n.userId == req.user.id && !n.read ? { ...n, read: true } : n
+      n.userId === req.user.userId && !n.read ? { ...n, read: true } : n
     );
     
     writeTable('Notifications', updated);
@@ -194,7 +194,7 @@ router.patch('/read-all', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     let notifications = readTable('Notifications');
-    const idx = notifications.findIndex(n => n.id == req.params.id && n.userId == req.user.id);
+    const idx = notifications.findIndex(n => n.id === Number(req.params.id) && n.userId === req.user.userId);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -228,7 +228,7 @@ router.get('/admin', (req, res) => {
     
     // Apply filters
     if (userId) {
-      notifications = notifications.filter(n => n.userId == userId);
+      notifications = notifications.filter(n => n.userId === userId);
     }
     if (type) {
       notifications = notifications.filter(n => n.type === type);
@@ -297,7 +297,7 @@ router.post('/admin', (req, res) => {
 router.put('/admin/:id', (req, res) => {
   try {
     const notifications = readTable('Notifications');
-    const idx = notifications.findIndex(n => n.id == req.params.id);
+    const idx = notifications.findIndex(n => n.id === Number(req.params.id));
     
     if (idx === -1) {
       return res.status(404).json({
@@ -322,7 +322,7 @@ router.put('/admin/:id', (req, res) => {
 router.delete('/admin/:id', (req, res) => {
   try {
     let notifications = readTable('Notifications');
-    const idx = notifications.findIndex(n => n.id == req.params.id);
+    const idx = notifications.findIndex(n => n.id === Number(req.params.id));
     
     if (idx === -1) {
       return res.status(404).json({

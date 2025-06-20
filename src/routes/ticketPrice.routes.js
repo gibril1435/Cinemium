@@ -31,7 +31,7 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const ticketPrices = readTable('TicketPrices');
-    const price = ticketPrices.find(p => p.id == req.params.id);
+    const price = ticketPrices.find(p => p.id === req.params.id);
     
     if (!price) {
       return res.status(404).json({
@@ -350,7 +350,7 @@ router.post('/custom', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const ticketPrices = readTable('TicketPrices');
-    const idx = ticketPrices.findIndex(p => p.id == req.params.id);
+    const idx = ticketPrices.findIndex(p => p.id === req.params.id);
     
     if (idx === -1) {
       return res.status(404).json({
@@ -380,7 +380,7 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     let ticketPrices = readTable('TicketPrices');
-    const idx = ticketPrices.findIndex(p => p.id == req.params.id);
+    const idx = ticketPrices.findIndex(p => p.id === req.params.id);
     
     if (idx === -1) {
       return res.status(404).json({

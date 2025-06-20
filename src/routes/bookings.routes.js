@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { readTable, writeTable } = require('../utils/jsonDb');
+const { isAdmin } = require('../middleware/auth');
+
+// Apply admin middleware to all routes
+router.use(isAdmin);
 
 // Get all bookings
 router.get('/', (req, res) => {
@@ -11,7 +15,7 @@ router.get('/', (req, res) => {
 // Get a booking by ID
 router.get('/:id', (req, res) => {
   const bookings = readTable('Bookings');
-  const booking = bookings.find(b => b.bookingId == req.params.id);
+  const booking = bookings.find(b => b.bookingId === req.params.id);
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
   res.json(booking);
 });
@@ -29,7 +33,7 @@ router.post('/', (req, res) => {
 // Update a booking
 router.put('/:id', (req, res) => {
   const bookings = readTable('Bookings');
-  const idx = bookings.findIndex(b => b.bookingId == req.params.id);
+  const idx = bookings.findIndex(b => b.bookingId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Booking not found' });
   bookings[idx] = { ...bookings[idx], ...req.body };
   writeTable('Bookings', bookings);
@@ -39,11 +43,17 @@ router.put('/:id', (req, res) => {
 // Delete a booking
 router.delete('/:id', (req, res) => {
   let bookings = readTable('Bookings');
-  const idx = bookings.findIndex(b => b.bookingId == req.params.id);
+  const idx = bookings.findIndex(b => b.bookingId === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Booking not found' });
   const deleted = bookings.splice(idx, 1)[0];
   writeTable('Bookings', bookings);
   res.json(deleted);
 });
 
-module.exports = router; 
+// Admin: Get all bookings (protected)
+const getAllBookings = (req, res) => {
+  const bookings = readTable('Bookings');
+  res.json(bookings);
+};
+
+module.exports = { router, getAllBookings }; 
