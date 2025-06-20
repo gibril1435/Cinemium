@@ -46,5 +46,13 @@
     "password": "$2b$10$Qfsw5q9Q.VlME6CoDfIrkuQhHkGq4oHtgIPsBYjeVdorGkGDFWxAC",
     "role": "customer",
     "createdAt": "2025-06-19T18:57:16.335Z"
+  },
+  {
+    "userId": 7,
+    "username": "Wira",
+    "email": "wira@example.com",
+    "password": "$2b$10$laIZilmx/KQcAAn2LRB6ouo08V4EZHzpVEky50vr5hziDUtzYjU7.",
+    "role": "customer",
+    "createdAt": "2025-06-20T11:35:41.144Z"
   }
 ]
