@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import MovieCarousel from '../components/MovieCarousel';
+import { useAuth } from '../AuthContext';
 
 // Movie type for the carousel
 type CarouselMovie = {
@@ -39,6 +40,7 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     Promise.all([
@@ -134,7 +136,7 @@ const Home: React.FC = () => {
         <MovieCarousel 
           movies={carouselMovies} 
           promoImage={promotions[0]?.imageUrl} 
-          isLoggedIn={!!localStorage.getItem('username')} 
+          isLoggedIn={!!user}
         />
       </div>
 
@@ -143,7 +145,7 @@ const Home: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-bold mb-1 md:mb-2">
-              Hi, {localStorage.getItem('username')}!
+              Hi, {user?.username || user?.email || 'Guest'}!
             </h1>
             <p className="text-sm md:text-base text-gray-400">
               What movie would you like to watch today?
@@ -206,9 +208,13 @@ interface MovieCardProps {
 
 const MovieCard: React.FC<MovieCardProps> = ({ movie, onNavigate, formatShowtimes, isMobile }) => (
   <div
-    className={`group bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden hover:border-yellow-500/50 transition-all duration-300 ${
+    className={`group bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden hover:border-yellow-500/50 transition-all duration-300 cursor-pointer ${
       isMobile ? 'w-[280px] flex-none' : 'w-[300px] flex-none'
     }`}
+    onClick={() => onNavigate(`/movie/${movie.id}`)}
+    tabIndex={0}
+    role="button"
+    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onNavigate(`/movie/${movie.id}`); }}
   >
     <div className="aspect-[3/4] relative overflow-hidden">
       <img
@@ -221,12 +227,6 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onNavigate, formatShowtime
           <div className="text-xs md:text-sm text-gray-300 mb-2">
             Showtimes: {formatShowtimes(movie.showtimes)}
           </div>
-          <button
-            onClick={() => onNavigate(`/movie/${movie.id}`)}
-            className="w-full bg-yellow-500 text-black px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-medium hover:bg-yellow-400 transition-colors"
-          >
-            View Details
-          </button>
         </div>
       </div>
     </div>

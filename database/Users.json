@@ -2,26 +2,26 @@
   {
     "userId": 1,
     "username": "admin",
-    "passwordHash": "dummyhash1",
-    "isAdmin": true,
-    "createdAt": null,
-    "lastLoginAt": null
+    "email": "admin@example.com",
+    "password": "$2b$10$wH8Qw6QnQw6QnQw6QnQnQeQw6QnQw6QnQw6QnQw6QnQw6QnQw6Qn",
+    "role": "admin",
+    "createdAt": "2025-06-19T00:00:00.000Z"
   },
   {
     "userId": 2,
     "username": "user1",
-    "passwordHash": "dummyhash2",
-    "isAdmin": false,
-    "createdAt": null,
-    "lastLoginAt": null
+    "email": "user1@example.com",
+    "password": "$2b$10$u1pQw6QnQw6QnQw6QnQnQeQw6QnQw6QnQw6QnQw6QnQw6QnQw6Qn",
+    "role": "customer",
+    "createdAt": "2025-06-19T00:00:00.000Z"
   },
   {
     "userId": 3,
     "username": "user2",
-    "passwordHash": "dummyhash3",
-    "isAdmin": false,
-    "createdAt": null,
-    "lastLoginAt": null
+    "email": "user2@example.com",
+    "password": "$2b$10$u2pQw6QnQw6QnQw6QnQnQeQw6QnQw6QnQw6QnQw6QnQw6QnQw6Qn",
+    "role": "customer",
+    "createdAt": "2025-06-19T00:00:00.000Z"
   },
   {
     "userId": 4,
