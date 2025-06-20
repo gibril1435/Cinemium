@@ -38,41 +38,27 @@ const SeatOrder: React.FC = () => {
   const ROWS = 5;
   const COLS = 8;
   const ROW_LABELS = ['A', 'B', 'C', 'D', 'E'];
-  const SEAT_PRICE = 50000; // mock price
+  const SEAT_PRICE = 50000;
 
   useEffect(() => {
     if (!showtimeId) return;
     setLoading(true);
-    api.get(`/booking/showtimes/${showtimeId}/seats`)
-      .then(res => {
-        console.log('Seat layout response:', res.data);
-        setSeats(res.data.layout?.seats || []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load seat layout');
-        setLoading(false);
-      });
-    // Fetch movie and showtime info
-    if (movieId) {
-      api.get(`/movies/${movieId}`).then(res => {
-        console.log('Movie detail response:', res.data);
-        setMovieTitle(res.data.title);
-      });
-    }
-    if (showtimeId) {
-      api.get(`/booking/showtimes/${showtimeId}`).then(res => {
-        console.log('Showtime detail response:', res.data);
-        setShowtime(res.data.showDateTime || res.data.time);
-      });
-    }
-    // Fetch add-ons
-    api.get('/addons')
-      .then(res => {
-        console.log('Add-ons response:', res.data);
-        setAddOns(res.data.addOns || res.data);
-      })
-      .catch(() => setAddOns([]));
+    Promise.all([
+      api.get(`/booking/showtimes/${showtimeId}/seats`),
+      movieId ? api.get(`/movies/${movieId}`) : Promise.resolve({ data: {} }),
+      api.get(`/booking/showtimes/${showtimeId}`),
+      api.get('/addons')
+    ]).then(([seatsRes, movieRes, showtimeRes, addOnsRes]) => {
+      setSeats(seatsRes.data.layout?.seats || []);
+      setMovieTitle(movieRes.data.title || '');
+      setShowtime(showtimeRes.data.showDateTime || showtimeRes.data.time);
+      setAddOns(addOnsRes.data.addOns || addOnsRes.data);
+      setLoading(false);
+    }).catch(err => {
+      console.error('Error loading data:', err);
+      setError('Failed to load booking information');
+      setLoading(false);
+    });
   }, [showtimeId, movieId]);
 
   const toggleSeat = (seatId: string) => {
@@ -124,116 +110,261 @@ const SeatOrder: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="container p-4">Loading seats...</div>;
-  if (error) return <div className="container p-4 text-[var(--error)]">{error}</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="animate-pulse space-y-8">
+              {/* Header skeleton */}
+              <div className="h-8 bg-gray-800 w-3/4 rounded"></div>
+              
+              {/* Screen skeleton */}
+              <div className="h-4 bg-gray-800 w-32 mx-auto rounded"></div>
+              
+              {/* Seats grid skeleton */}
+              <div className="grid grid-cols-8 gap-2 max-w-2xl mx-auto">
+                {Array.from({ length: 40 }).map((_, i) => (
+                  <div key={i} className="aspect-square bg-gray-800 rounded"></div>
+                ))}
+              </div>
+              
+              {/* Add-ons skeleton */}
+              <div className="space-y-4">
+                <div className="h-6 bg-gray-800 w-48 rounded"></div>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="h-24 bg-gray-800 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-red-900/50 border border-red-500 text-red-100 px-6 py-4 rounded-lg">
+              {error}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container">
+    <div className="min-h-screen bg-gray-900 py-8">
       {notification && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50 animate-fade-in-out">
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in-out">
           {notification}
         </div>
       )}
-      <h2 className="text-xl font-bold mb-2">Pilih Kursi - {movieTitle} - Jam: {showtime ? new Date(showtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</h2>
-      <div className="mb-2 text-center font-mono text-[var(--text-secondary)]">LAYAR</div>
-      <div className="flex flex-col items-center mb-2">
-        {/* Column labels */}
-        <div className="flex mb-2 justify-center">
-          <div className="w-8" /> {/* Placeholder for row label */}
-          {[...Array(COLS)].map((_, i) => (
-            <div
-              key={i}
-              className="seat-btn font-bold flex items-center justify-center"
-              style={{ pointerEvents: 'none', background: 'transparent', color: '#fff', boxShadow: 'none' }}
-            >
-              {i + 1}
-            </div>
-          ))}
-        </div>
-        {/* Seat grid */}
-        {Array.from({ length: ROWS }).map((_, rowIdx) => (
-          <div key={rowIdx} className="flex items-center mb-2">
-            <div className="w-6 text-center font-bold">{ROW_LABELS[rowIdx]}</div>
-            {Array.from({ length: COLS }).map((_, colIdx) => {
-              const seat = seats.find(s => s.label === `${ROW_LABELS[rowIdx]}${colIdx + 1}`);
-              return seat ? (
-                <button
-                  key={seat.id}
-                  disabled={!seat.available}
-                  onClick={() => toggleSeat(seat.id)}
-                  className={`seat-btn ${!seat.available ? 'seat-occupied' : selectedSeats.includes(seat.id) ? 'seat-selected' : 'seat-available'}`}
-                  title={seat.label}
-                  aria-label={`Seat ${seat.label}${seat.available ? '' : ' (unavailable)'}`}
-                >
-                  {colIdx + 1}
-                </button>
-              ) : (
-                <div key={colIdx} className="w-10 h-10 m-0.5" />
-              );
-            })}
+      
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              {movieTitle}
+            </h1>
+            <p className="text-gray-400">
+              {showtime ? new Date(showtime).toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              }) : ''}
+            </p>
           </div>
-        ))}
-      </div>
-      {/* Legend */}
-      <div className="flex gap-4 mb-4 text-sm justify-center">
-        <div className="flex items-center"><span className="inline-block w-5 h-5 seat-selected mr-1" /> Dipilih</div>
-        <div className="flex items-center"><span className="inline-block w-5 h-5 seat-occupied mr-1" /> Dipesan</div>
-        <div className="flex items-center"><span className="inline-block w-5 h-5 seat-available mr-1" /> Kosong</div>
-      </div>
-      {/* Add-on Selection */}
-      {addOns.length > 0 && (
-        <div className="payment-card mb-4">
-          <div className="font-semibold mb-2 text-lg border-b border-gray-700 pb-2 mb-2">Pilih Add-on (Opsional)</div>
-          <div className="space-y-2">
-            {addOns.map(addOn => (
-              <div key={addOn.id} className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="font-medium text-base">{addOn.name}</div>
-                  <div className="text-xs text-[var(--text-secondary)] mb-1">{addOn.description}</div>
-                  <div className="text-sm text-[var(--success)]">Rp{addOn.price}</div>
+
+          {/* Main Content */}
+          <div className="grid md:grid-cols-[1fr,auto] gap-8">
+            {/* Left Column - Seat Selection */}
+            <div>
+              {/* Screen */}
+              <div className="relative mb-8">
+                <div className="h-2 bg-yellow-500/20 rounded-full mb-2"></div>
+                <div className="text-center text-sm text-gray-400 uppercase tracking-wider">Screen</div>
+              </div>
+
+              {/* Seat Grid */}
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6 mb-8">
+                <div className="flex flex-col items-center">
+                  {/* Column labels */}
+                  <div className="flex mb-4 justify-center">
+                    <div className="w-8" />
+                    {[...Array(COLS)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-10 h-10 flex items-center justify-center text-gray-400 text-sm"
+                      >
+                        {i + 1}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Seat grid */}
+                  {Array.from({ length: ROWS }).map((_, rowIdx) => (
+                    <div key={rowIdx} className="flex items-center mb-4">
+                      <div className="w-8 text-center font-medium text-gray-400">
+                        {ROW_LABELS[rowIdx]}
+                      </div>
+                      {Array.from({ length: COLS }).map((_, colIdx) => {
+                        const seat = seats.find(s => s.label === `${ROW_LABELS[rowIdx]}${colIdx + 1}`);
+                        return seat ? (
+                          <button
+                            key={seat.id}
+                            disabled={!seat.available}
+                            onClick={() => toggleSeat(seat.id)}
+                            className={`
+                              w-10 h-10 m-0.5 rounded-lg transition-all duration-200
+                              ${!seat.available ? 
+                                'bg-gray-700 cursor-not-allowed opacity-50' : 
+                                selectedSeats.includes(seat.id) ?
+                                'bg-yellow-500 text-black hover:bg-yellow-400' :
+                                'bg-gray-700 hover:bg-gray-600'
+                              }
+                            `}
+                            title={seat.label}
+                            aria-label={`Seat ${seat.label}${seat.available ? '' : ' (unavailable)'}`}
+                          >
+                            {colIdx + 1}
+                          </button>
+                        ) : (
+                          <div key={colIdx} className="w-10 h-10 m-0.5" />
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    max={addOn.stock}
-                    value={selectedAddOns[addOn.id] || 0}
-                    onChange={e => handleAddOnChange(addOn.id, Math.max(0, Math.min(addOn.stock, Number(e.target.value))))}
-                    className="input w-20 text-center"
-                  />
-                  <span className="text-xs text-[var(--text-secondary)]">x</span>
-                  <span className="text-sm font-semibold">Rp{(selectedAddOns[addOn.id] || 0) * addOn.price}</span>
+
+                {/* Legend */}
+                <div className="flex gap-6 justify-center mt-6 text-sm">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded bg-yellow-500 mr-2"></div>
+                    <span className="text-gray-300">Selected</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded bg-gray-700 opacity-50 mr-2"></div>
+                    <span className="text-gray-300">Occupied</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded bg-gray-700 mr-2"></div>
+                    <span className="text-gray-300">Available</span>
+                  </div>
                 </div>
               </div>
-            ))}
+
+              {/* Add-ons Section */}
+              {addOns.length > 0 && (
+                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Add-ons (Optional)</h2>
+                  <div className="space-y-4">
+                    {addOns.map(addOn => (
+                      <div 
+                        key={addOn.id} 
+                        className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700/50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-medium text-white mb-1">{addOn.name}</h3>
+                          <p className="text-sm text-gray-400 mb-2">{addOn.description}</p>
+                          <p className="text-yellow-500">Rp{addOn.price.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleAddOnChange(addOn.id, Math.max(0, (selectedAddOns[addOn.id] || 0) - 1))}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                            disabled={(selectedAddOns[addOn.id] || 0) === 0}
+                          >
+                            -
+                          </button>
+                          <span className="w-8 text-center text-white">
+                            {selectedAddOns[addOn.id] || 0}
+                          </span>
+                          <button
+                            onClick={() => handleAddOnChange(addOn.id, Math.min(addOn.stock, (selectedAddOns[addOn.id] || 0) + 1))}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                            disabled={(selectedAddOns[addOn.id] || 0) === addOn.stock}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Order Summary */}
+            <div className="w-full md:w-80">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6 sticky top-8">
+                <h2 className="text-lg font-semibold text-white mb-4">Order Summary</h2>
+                
+                {/* Selected Seats */}
+                <div className="mb-4">
+                  <div className="text-sm text-gray-400 mb-2">Selected Seats</div>
+                  {selectedSeats.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedSeats.map(seatId => {
+                        const seat = seats.find(s => s.id === seatId);
+                        return seat && (
+                          <div key={seatId} className="px-2 py-1 bg-gray-700 rounded text-sm text-white">
+                            {seat.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No seats selected</div>
+                  )}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Seats ({selectedSeats.length})</span>
+                    <span className="text-white">Rp{(selectedSeats.length * SEAT_PRICE).toLocaleString()}</span>
+                  </div>
+                  {totalAddOnPrice > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Add-ons</span>
+                      <span className="text-white">Rp{totalAddOnPrice.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-700 pt-2 mt-2">
+                    <div className="flex justify-between font-medium">
+                      <span className="text-white">Total</span>
+                      <span className="text-yellow-500">Rp{totalPrice.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pay Button */}
+                <button
+                  onClick={handlePay}
+                  disabled={selectedSeats.length === 0 || paying}
+                  className={`
+                    w-full py-3 rounded-lg font-medium transition-all duration-200
+                    ${selectedSeats.length === 0 || paying ?
+                      'bg-gray-700 text-gray-400 cursor-not-allowed' :
+                      'bg-yellow-500 hover:bg-yellow-400 text-black'
+                    }
+                  `}
+                >
+                  {paying ? 'Processing...' : 'Proceed to Payment'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      )}
-      {/* Summary */}
-      <div className="payment-card">
-        <div className="font-semibold mb-2">Ringkasan Pesanan:</div>
-        <div className="mb-1">Kursi: {selectedSeats.map(id => seats.find(s => s.id === id)?.label).filter(Boolean).join(', ') || '-'}</div>
-        {addOns.length > 0 ? (
-          <div className="mb-1">Add-on: {Object.entries(selectedAddOns).filter(([_, qty]) => qty > 0).length === 0 ? '-' : (
-            <ul className="list-disc ml-5">
-              {addOns.filter(a => selectedAddOns[a.id] > 0).map(a => (
-                <li key={a.id}>{a.name} x{selectedAddOns[a.id]} (Rp{a.price * selectedAddOns[a.id]})</li>
-              ))}
-            </ul>
-          )}</div>
-        ) : (
-          <div className="mb-1 text-[var(--text-secondary)]">No add-ons available.</div>
-        )}
-        <div className="font-bold text-lg border-t border-gray-700 pt-2 mt-2">
-          Total: Rp{totalPrice.toLocaleString()}
-        </div>
-        <button
-          onClick={handlePay}
-          disabled={selectedSeats.length === 0 || paying}
-          className="btn btn-primary w-full mt-4"
-        >
-          {paying ? 'Processing...' : 'Bayar Sekarang'}
-        </button>
       </div>
     </div>
   );

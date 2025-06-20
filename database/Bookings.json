@@ -1,6 +1,7 @@
 [
   {
     "bookingId": 1,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:37:44.756Z",
@@ -8,6 +9,7 @@
   },
   {
     "bookingId": 2,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:42:20.814Z",
@@ -15,6 +17,7 @@
   },
   {
     "bookingId": 3,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:42:47.435Z",
@@ -22,6 +25,7 @@
   },
   {
     "bookingId": 4,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:49:05.798Z",
@@ -29,6 +33,7 @@
   },
   {
     "bookingId": 5,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:51:03.660Z",
@@ -36,6 +41,7 @@
   },
   {
     "bookingId": 6,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:53:11.892Z",
@@ -43,9 +49,58 @@
   },
   {
     "bookingId": 7,
+    "userId": 4,
     "showtimeId": "1",
     "totalAmount": 50000,
     "bookingDate": "2025-06-19T18:53:36.202Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 8,
+    "userId": 4,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T20:03:40.157Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 9,
+    "userId": 5,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T22:09:11.363Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 10,
+    "userId": 5,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T22:50:29.609Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 11,
+    "userId": 5,
+    "showtimeId": "1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T22:53:46.619Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 12,
+    "userId": 5,
+    "showtimeId": 1,
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-19T23:27:46.012Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 13,
+    "userId": 6,
+    "showtimeId": 1,
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-20T06:58:41.754Z",
     "status": "confirmed"
   }
 ]

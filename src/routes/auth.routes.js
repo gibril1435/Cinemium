@@ -46,10 +46,10 @@ router.post('/register', (req, res) => {
   if (users.find(u => u.email === email)) {
     return res.status(400).json({ error: 'Email already registered' });
   }
-  const newId = users.length ? Math.max(...users.map(u => u.UserID)) + 1 : 1;
+  const newId = users.length ? Math.max(...users.map(u => u.userId)) + 1 : 1;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const newUser = {
-    UserID: newId,
+    userId: newId,
     username,
     email,
     password: hashedPassword,
@@ -102,7 +102,7 @@ router.post('/login', (req, res) => {
   if (!bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ userId: user.UserID, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ userId: user.userId, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
   res.json({ token, user: { ...user, password: undefined } });
 });
 
@@ -128,7 +128,7 @@ router.post('/login', (req, res) => {
 // Get current user
 router.get('/me', authenticate, (req, res) => {
   const users = readTable('Users');
-  const user = users.find(u => u.UserID === req.user.userId);
+  const user = users.find(u => u.userId === req.user.userId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }

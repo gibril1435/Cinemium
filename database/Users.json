@@ -40,7 +40,7 @@
     "createdAt": "2025-06-19T14:31:48.874Z"
   },
   {
-    "UserID": null,
+    "userId": 6,
     "username": "bryant",
     "email": "bryantcianata446@gmail.com",
     "password": "$2b$10$Qfsw5q9Q.VlME6CoDfIrkuQhHkGq4oHtgIPsBYjeVdorGkGDFWxAC",

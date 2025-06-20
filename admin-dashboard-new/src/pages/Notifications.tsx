@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import { authFetch } from '../utils/authFetch';
 
 type Notification = {
   id: string;
@@ -21,8 +21,10 @@ const Notifications: React.FC = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await api.get('/admin/notifications');
-      setNotifications(response.data);
+      const response = await authFetch('/notifications');
+      if (!response.ok) throw new Error('Failed to fetch notifications');
+      const data = await response.json();
+      setNotifications(data.notifications);
       setLoading(false);
     } catch (err) {
       setError('Failed to load notifications');
@@ -32,7 +34,10 @@ const Notifications: React.FC = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await api.put(`/admin/notifications/${id}/read`);
+      const response = await authFetch(`/notifications/${id}/read`, {
+        method: 'PATCH',
+      });
+      if (!response.ok) throw new Error('Failed to mark as read');
       setNotifications(prev =>
         prev.map(n => (n.id === id ? { ...n, read: true } : n))
       );
@@ -43,7 +48,10 @@ const Notifications: React.FC = () => {
 
   const deleteNotification = async (id: string) => {
     try {
-      await api.delete(`/admin/notifications/${id}`);
+      const response = await authFetch(`/notifications/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete notification');
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (err) {
       setError('Failed to delete notification');

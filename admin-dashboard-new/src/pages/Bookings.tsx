@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { EyeIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 interface Booking {
   id: number;
@@ -26,9 +27,14 @@ export default function Bookings() {
 
   const fetchBookings = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get('/api/admin/bookings');
-      // setBookings(response.data);
+      const response = await authFetch('/bookings');
+      if (!response.ok) throw new Error('Failed to fetch bookings');
+      const data = await response.json();
+      // Map backend bookingId to id for frontend
+      setBookings(data.map((booking: any) => ({
+        ...booking,
+        id: booking.bookingId,
+      })));
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -44,7 +50,13 @@ export default function Bookings() {
   const handleCancelBooking = async (bookingId: number) => {
     if (window.confirm('Are you sure you want to cancel this booking?')) {
       try {
-        // await axios.put(`/api/admin/bookings/${bookingId}/cancel`);
+        // Update booking status to 'cancelled'
+        const response = await authFetch(`/bookings/${bookingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'cancelled' }),
+        });
+        if (!response.ok) throw new Error('Failed to cancel booking');
         fetchBookings();
       } catch (error) {
         console.error('Error cancelling booking:', error);

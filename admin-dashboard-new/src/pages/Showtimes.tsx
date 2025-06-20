@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 interface Showtime {
   id: number;
@@ -31,9 +32,14 @@ export default function Showtimes() {
 
   const fetchShowtimes = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get('/api/admin/showtimes');
-      // setShowtimes(response.data);
+      const response = await authFetch('/showtimes');
+      if (!response.ok) throw new Error('Failed to fetch showtimes');
+      const data = await response.json();
+      // Map backend showtimeId to id for frontend
+      setShowtimes(data.map((showtime: any) => ({
+        ...showtime,
+        id: showtime.showtimeId,
+      })));
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching showtimes:', error);
@@ -44,10 +50,28 @@ export default function Showtimes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        movieId: parseInt(formData.movieId),
+        studioId: parseInt(formData.studioId),
+        price: parseFloat(formData.price),
+      };
       if (selectedShowtime) {
-        // await axios.put(`/api/admin/showtimes/${selectedShowtime.id}`, formData);
+        // Update showtime
+        const response = await authFetch(`/showtimes/${selectedShowtime.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Failed to update showtime');
       } else {
-        // await axios.post('/api/admin/showtimes', formData);
+        // Create showtime
+        const response = await authFetch('/showtimes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Failed to create showtime');
       }
       setIsModalOpen(false);
       fetchShowtimes();
@@ -71,7 +95,10 @@ export default function Showtimes() {
   const handleDelete = async (showtimeId: number) => {
     if (window.confirm('Are you sure you want to delete this showtime?')) {
       try {
-        // await axios.delete(`/api/admin/showtimes/${showtimeId}`);
+        const response = await authFetch(`/showtimes/${showtimeId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete showtime');
         fetchShowtimes();
       } catch (error) {
         console.error('Error deleting showtime:', error);

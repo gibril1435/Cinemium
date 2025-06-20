@@ -23,7 +23,7 @@ function authenticate(req, res, next) {
 function isAdmin(req, res, next) {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const users = readTable('Users');
-    const user = users.find(u => u.UserID === req.user.userId);
+    const user = users.find(u => u.userId === req.user.userId);
     if (!user || user.role !== 'admin') {
         return res.status(403).json({ error: 'Forbidden: Admins only' });
     }

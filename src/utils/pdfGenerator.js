@@ -5,83 +5,90 @@ const path = require('path');
 /**
  * Generate a PDF ticket for a movie
  * @param {Object} ticketData - Ticket information
+ * @param {string} ticketData.bookingId - Booking ID
  * @param {string} ticketData.movieTitle - Movie title
  * @param {string} ticketData.showTime - Show time
- * @param {string} ticketData.seatNumber - Seat number
- * @param {string} ticketData.studio - Studio number
- * @param {string} ticketData.qrCode - QR code data URL
- * @returns {Promise<string>} - Path to the generated PDF
+ * @param {string} ticketData.seats - Seat numbers
+ * @param {string} ticketData.studioName - Studio name
+ * @param {number} ticketData.totalAmount - Total amount
+ * @param {string} [ticketData.qrCode] - QR code data URL
+ * @returns {Promise<Buffer>} - PDF buffer
  */
 const generateTicketPDF = async (ticketData) => {
     return new Promise((resolve, reject) => {
         try {
             // Create PDF document
             const doc = new PDFDocument({
-                size: 'A6',
-                layout: 'landscape',
-                margin: 20
+                size: [400, 200], // Landscape orientation
+                margin: 0,
+                info: {
+                    Title: `Movie Ticket - ${ticketData.movieTitle}`,
+                    Author: 'Cinemium',
+                    Subject: 'Movie Ticket'
+                }
             });
 
-            // Create unique filename
-            const filename = `ticket_${Date.now()}.pdf`;
-            const filepath = path.join(__dirname, '../../temp', filename);
+            // Collect PDF chunks
+            const chunks = [];
+            doc.on('data', chunk => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
 
-            // Ensure temp directory exists
-            if (!fs.existsSync(path.join(__dirname, '../../temp'))) {
-                fs.mkdirSync(path.join(__dirname, '../../temp'), { recursive: true });
-            }
+            // Add white background
+            doc.rect(0, 0, doc.page.width, doc.page.height)
+               .fill('#ffffff');
 
-            // Pipe PDF to file
-            const stream = fs.createWriteStream(filepath);
-            doc.pipe(stream);
+            // Add ticket border
+            doc.rect(5, 5, doc.page.width - 10, doc.page.height - 10)
+               .lineWidth(1)
+               .stroke('#000000');
 
-            // Add content
-            doc
-                .fontSize(24)
-                .font('Helvetica-Bold')
-                .text('CINEMIUM', { align: 'center' })
-                .moveDown();
+            // Add vertical perforated line
+            doc.save()
+               .moveTo(130, 5)
+               .lineTo(130, doc.page.height - 5)
+               .dash(5, { space: 5 })
+               .stroke()
+               .undash();
 
-            doc
-                .fontSize(16)
-                .font('Helvetica')
-                .text('Movie Ticket', { align: 'center' })
-                .moveDown();
+            // Header
+            doc.font('Helvetica-Bold')
+               .fontSize(10)
+               .fillColor('#000000')
+               .text('MOVIE TICKET', 20, 20);
 
-            // Add movie details
-            doc
-                .fontSize(12)
-                .text(`Movie: ${ticketData.movieTitle}`)
-                .text(`Show Time: ${new Date(ticketData.showTime).toLocaleString()}`)
-                .text(`Seat: ${ticketData.seatNumber}`)
-                .text(`Studio: ${ticketData.studio}`)
-                .moveDown();
+            // Left section
+            doc.font('Helvetica')
+               .fontSize(8)
+               .text(`Ticket No: ${ticketData.bookingId}`, 20, 40)
+               .text(`Seat: ${ticketData.seats}`, 20, 60)
+               .text(`Studio: ${ticketData.studioName}`, 20, 80)
+               .text(`Date: ${new Date(ticketData.showTime).toLocaleDateString()}`, 20, 100)
+               .text(`Time: ${new Date(ticketData.showTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, 20, 120);
 
-            // Add QR code
+            // Add barcode/QR code
             if (ticketData.qrCode) {
-                doc.image(ticketData.qrCode, {
-                    fit: [150, 150],
-                    align: 'center'
+                doc.image(ticketData.qrCode, 20, 140, {
+                    width: 50,
+                    height: 50
                 });
             }
 
-            // Add footer
-            doc
-                .fontSize(8)
-                .text('Thank you for choosing Cinemium!', { align: 'center' })
-                .text('Please arrive 15 minutes before the show.', { align: 'center' });
+            // Right section
+            doc.font('Helvetica-Bold')
+               .fontSize(12)
+               .text('ADMIT ONE', 150, 20)
+               .font('Helvetica')
+               .fontSize(10)
+               .text(ticketData.movieTitle, 150, 50, { width: 230 })
+               .fontSize(8)
+               .text(`Seat: ${ticketData.seats}`, 150, 80)
+               .text(`Studio: ${ticketData.studioName}`, 150, 100)
+               .text(`Date: ${new Date(ticketData.showTime).toLocaleDateString()}`, 150, 120)
+               .text(`Time: ${new Date(ticketData.showTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, 150, 140)
+               .text(`Price: Rp${ticketData.totalAmount.toLocaleString()}`, 150, 160);
 
             // Finalize PDF
             doc.end();
-
-            // Handle stream completion
-            stream.on('finish', () => {
-                resolve(filepath);
-            });
-
-            stream.on('error', (error) => {
-                reject(error);
-            });
         } catch (error) {
             reject(error);
         }

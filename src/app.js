@@ -23,6 +23,7 @@ const addOnSalesRoutes = require('./routes/admin/addOnSales.routes');
 
 // Import tasks
 const { scheduleCleanup } = require('./tasks/notificationCleanup.task');
+const { toCamelCaseDeep } = require('./utils/caseUtils');
 
 const app = express();
 
@@ -78,6 +79,15 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin/prices', ticketPriceRoutes);
 app.use('/api/admin/schedule', scheduleManagementRoutes);
 app.use('/api/admin/addon-sales', addOnSalesRoutes);
+
+// Middleware to enforce camelCase on all outgoing JSON responses
+app.use((req, res, next) => {
+  const originalJson = res.json;
+  res.json = function (data) {
+    return originalJson.call(this, toCamelCaseDeep(data));
+  };
+  next();
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

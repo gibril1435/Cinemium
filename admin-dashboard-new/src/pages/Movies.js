@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 export default function Movies() {
   const [movies, setMovies] = useState([]);
@@ -23,8 +24,10 @@ export default function Movies() {
 
   const fetchMovies = async () => {
     try {
-      // const response = await axios.get('/api/admin/movies');
-      // setMovies(response.data);
+      const response = await authFetch('/movies');
+      if (!response.ok) throw new Error('Failed to fetch movies');
+      const data = await response.json();
+      setMovies(data);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching movies:', error);
@@ -36,9 +39,21 @@ export default function Movies() {
     e.preventDefault();
     try {
       if (selectedMovie) {
-        // await axios.put(`/api/admin/movies/${selectedMovie.id}`, formData);
+        // Update movie
+        const response = await authFetch(`/movies/${selectedMovie.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) throw new Error('Failed to update movie');
       } else {
-        // await axios.post('/api/admin/movies', formData);
+        // Create movie
+        const response = await authFetch('/movies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) throw new Error('Failed to create movie');
       }
       setIsModalOpen(false);
       fetchMovies();
@@ -65,7 +80,10 @@ export default function Movies() {
   const handleDelete = async (movieId) => {
     if (window.confirm('Are you sure you want to delete this movie?')) {
       try {
-        // await axios.delete(`/api/admin/movies/${movieId}`);
+        const response = await authFetch(`/movies/${movieId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete movie');
         fetchMovies();
       } catch (error) {
         console.error('Error deleting movie:', error);

@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import History from './pages/History';
 import MovieDetail from './pages/MovieDetail';
@@ -12,8 +12,20 @@ import { AuthProvider, useAuth } from './AuthContext';
 
 const PrivateRoute = ({ children }: { children: ReactElement }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="p-4">Loading...</div>;
-  if (!user) return <div className="p-4 text-red-500">You must be logged in to access this page.</div>;
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
   return children;
 };
 

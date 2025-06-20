@@ -130,6 +130,7 @@ router.post('/transactions', authenticate, async (req, res) => {
   try {
     const { showtimeId, seats, addOns } = req.body;
     const userId = req.user.userId;
+    const numericShowtimeId = parseInt(showtimeId, 10);
     
     // Validate seat count
     if (!seats || seats.length === 0 || seats.length > 4) {
@@ -141,7 +142,7 @@ router.post('/transactions', authenticate, async (req, res) => {
     
     // Check if showtime exists
     const showtimes = readTable('Showtimes');
-    const showtime = showtimes.find(s => s.showtimeId == showtimeId);
+    const showtime = showtimes.find(s => s.showtimeId === numericShowtimeId);
     if (!showtime) {
       return res.status(404).json({
         error: 'Not Found',
@@ -153,7 +154,7 @@ router.post('/transactions', authenticate, async (req, res) => {
     const bookingSeats = readTable('BookingSeats');
     const reservedSeats = new Set(
       bookingSeats
-        .filter(bs => bs.showtimeId == showtimeId)
+        .filter(bs => bs.showtimeId === numericShowtimeId)
         .map(bs => bs.seatNumber)
     );
     
@@ -185,10 +186,15 @@ router.post('/transactions', authenticate, async (req, res) => {
     const bookings = readTable('Bookings');
     const newBookingId = bookings.length ? Math.max(...bookings.map(b => b.bookingId)) + 1 : 1;
     
+    // Get studio name
+    const studios = readTable('Studios');
+    const studio = studios.find(s => s.studioId === showtime.studioId);
+
     const newBooking = {
       bookingId: newBookingId,
       userId: userId,
-      showtimeId: showtimeId,
+      showtimeId: numericShowtimeId,
+      studioName: studio ? studio.name : 'N/A',
       totalAmount: totalAmount,
       bookingDate: new Date().toISOString(),
       status: 'confirmed'
@@ -203,7 +209,7 @@ router.post('/transactions', authenticate, async (req, res) => {
       return {
         bookingSeatId: newBookingSeatId,
         bookingId: newBookingId,
-        showtimeId: showtimeId,
+        showtimeId: numericShowtimeId,
         seatNumber: seatNumber
       };
     });
@@ -243,7 +249,7 @@ router.post('/transactions', authenticate, async (req, res) => {
       const qrCode = await QRCode.toDataURL(JSON.stringify({
         bookingId: newBookingId,
         seatNumber,
-        showtimeId,
+        showtimeId: numericShowtimeId,
         movieTitle: movie ? movie.title : 'Unknown Movie',
         showTime: showtime.showDateTime
       }));
@@ -306,6 +312,15 @@ router.post('/transactions', authenticate, async (req, res) => {
 router.get('/history', authenticate, (req, res) => {
   try {
     const userId = req.user.userId;
+    
+    // Validate userId from JWT
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid user token'
+      });
+    }
+    
     const bookings = readTable('Bookings');
     const showtimes = readTable('Showtimes');
     const movies = readTable('Movies');
@@ -313,8 +328,9 @@ router.get('/history', authenticate, (req, res) => {
     const addOnSales = readTable('AddOnSales');
     const addOns = readTable('AddOns');
     
+    // Strict equality comparison and ensure userId exists in booking
     const userBookings = bookings
-      .filter(b => b.userId == userId)
+      .filter(b => b.userId && b.userId === userId)
       .map(booking => {
         const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
         const movie = movies.find(m => m.movieId == showtime?.movieId);
@@ -360,8 +376,17 @@ router.get('/history', authenticate, (req, res) => {
 router.get('/:bookingId', authenticate, (req, res) => {
   try {
     const userId = req.user.userId;
+    
+    // Validate userId from JWT
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid user token'
+      });
+    }
+    
     const bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId == userId);
+    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
     
     if (!booking) {
       return res.status(404).json({
@@ -421,8 +446,17 @@ router.get('/:bookingId', authenticate, (req, res) => {
 router.delete('/:bookingId', authenticate, (req, res) => {
   try {
     const userId = req.user.userId;
+    
+    // Validate userId from JWT
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid user token'
+      });
+    }
+    
     let bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId == userId);
+    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
     
     if (!booking) {
       return res.status(404).json({
@@ -479,8 +513,17 @@ router.delete('/:bookingId', authenticate, (req, res) => {
 router.get('/:bookingId/ticket', authenticate, async (req, res) => {
   try {
     const userId = req.user.userId;
+    
+    // Validate userId from JWT
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid user token'
+      });
+    }
+    
     const bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId == userId);
+    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
     
     if (!booking) {
       return res.status(404).json({
@@ -493,28 +536,39 @@ router.get('/:bookingId/ticket', authenticate, async (req, res) => {
     const movies = readTable('Movies');
     const bookingSeats = readTable('BookingSeats');
     const users = readTable('Users');
+    const studios = readTable('Studios');
     
     const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
     const movie = movies.find(m => m.movieId == showtime?.movieId);
     const user = users.find(u => u.userId == userId);
+    const studio = studios.find(s => s.studioId == showtime?.studioId);
     const seats = bookingSeats
       .filter(bs => bs.bookingId == booking.bookingId)
       .map(bs => bs.seatNumber);
+
+    // Generate QR code
+    const qrCode = await QRCode.toDataURL(JSON.stringify({
+      bookingId: booking.bookingId,
+      seats: seats.join(', '),
+      showtime: showtime?.showDateTime,
+      studio: booking.studioName || 'N/A'
+    }));
     
     const ticketData = {
       bookingId: booking.bookingId,
-      userName: user ? user.username : 'Unknown User',
       movieTitle: movie ? movie.title : 'Unknown Movie',
       showTime: showtime ? showtime.showDateTime : 'Unknown Time',
       seats: seats.join(', '),
+      studioName: booking.studioName || 'N/A',
       totalAmount: booking.totalAmount,
-      bookingDate: booking.bookingDate
+      qrCode
     };
     
     const pdfBuffer = await generateTicketPDF(ticketData);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=ticket-${booking.bookingId}.pdf`);
+    res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Error generating ticket PDF:', error);

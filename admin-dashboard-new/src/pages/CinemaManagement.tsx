@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { authFetch } from '../utils/authFetch';
 
 type Movie = {
   id: string;
@@ -32,33 +32,42 @@ const CinemaManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       switch (activeTab) {
-        case 'movies':
-          const moviesRes = await api.get('/admin/movies');
-          setMovies(moviesRes.data);
+        case 'movies': {
+          const response = await authFetch('/movies');
+          if (!response.ok) throw new Error('Failed to fetch movies');
+          const data = await response.json();
+          setMovies(data.map((movie: any) => ({ ...movie, id: movie.movieId })));
           break;
-        case 'showtimes':
-          const showtimesRes = await api.get('/admin/showtimes');
-          setShowtimes(showtimesRes.data);
+        }
+        case 'showtimes': {
+          const response = await authFetch('/showtimes');
+          if (!response.ok) throw new Error('Failed to fetch showtimes');
+          const data = await response.json();
+          setShowtimes(data.map((showtime: any) => ({ ...showtime, id: showtime.showtimeId })));
           break;
-        case 'studios':
-          const studiosRes = await api.get('/admin/studios');
-          setStudios(studiosRes.data);
+        }
+        case 'studios': {
+          const response = await authFetch('/studios');
+          if (!response.ok) throw new Error('Failed to fetch studios');
+          const data = await response.json();
+          setStudios(data.map((studio: any) => ({ ...studio, id: studio.studioId })));
           break;
+        }
       }
       setLoading(false);
     } catch (err) {
       setError('Failed to load data');
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error) return <div className="p-4 text-[var(--error)]">{error}</div>;

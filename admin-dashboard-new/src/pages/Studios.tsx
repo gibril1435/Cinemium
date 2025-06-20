@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 interface Studio {
   id: number;
@@ -37,9 +38,14 @@ export default function Studios() {
 
   const fetchStudios = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get('/api/admin/studios');
-      // setStudios(response.data);
+      const response = await authFetch('/studios');
+      if (!response.ok) throw new Error('Failed to fetch studios');
+      const data = await response.json();
+      // Map backend studioId to id for frontend
+      setStudios(data.map((studio: any) => ({
+        ...studio,
+        id: studio.studioId,
+      })));
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching studios:', error);
@@ -60,11 +66,27 @@ export default function Studios() {
           status: 'available',
         })),
       };
-
+      const payload = {
+        ...formData,
+        capacity: parseInt(formData.capacity),
+        layout,
+      };
       if (selectedStudio) {
-        // await axios.put(`/api/admin/studios/${selectedStudio.id}`, { ...formData, layout });
+        // Update studio
+        const response = await authFetch(`/studios/${selectedStudio.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Failed to update studio');
       } else {
-        // await axios.post('/api/admin/studios', { ...formData, layout });
+        // Create studio
+        const response = await authFetch('/studios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Failed to create studio');
       }
       setIsModalOpen(false);
       fetchStudios();
@@ -88,7 +110,10 @@ export default function Studios() {
   const handleDelete = async (studioId: number) => {
     if (window.confirm('Are you sure you want to delete this studio?')) {
       try {
-        // await axios.delete(`/api/admin/studios/${studioId}`);
+        const response = await authFetch(`/studios/${studioId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete studio');
         fetchStudios();
       } catch (error) {
         console.error('Error deleting studio:', error);

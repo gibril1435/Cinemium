@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 interface Addon {
   id: number;
@@ -33,9 +34,14 @@ export default function Addons() {
 
   const fetchAddons = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get('/api/admin/addons');
-      // setAddons(response.data);
+      const response = await authFetch('/addons');
+      if (!response.ok) throw new Error('Failed to fetch add-ons');
+      const data = await response.json();
+      // Map backend addOnId to id for frontend
+      setAddons(data.map((addon: any) => ({
+        ...addon,
+        id: addon.addOnId,
+      })));
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching add-ons:', error);
@@ -46,10 +52,27 @@ export default function Addons() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+      };
       if (selectedAddon) {
-        // await axios.put(`/api/admin/addons/${selectedAddon.id}`, formData);
+        // Update add-on
+        const response = await authFetch(`/addons/${selectedAddon.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Failed to update add-on');
       } else {
-        // await axios.post('/api/admin/addons', formData);
+        // Create add-on
+        const response = await authFetch('/addons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Failed to create add-on');
       }
       setIsModalOpen(false);
       fetchAddons();
@@ -75,7 +98,10 @@ export default function Addons() {
   const handleDelete = async (addonId: number) => {
     if (window.confirm('Are you sure you want to delete this add-on?')) {
       try {
-        // await axios.delete(`/api/admin/addons/${addonId}`);
+        const response = await authFetch(`/addons/${addonId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete add-on');
         fetchAddons();
       } catch (error) {
         console.error('Error deleting add-on:', error);

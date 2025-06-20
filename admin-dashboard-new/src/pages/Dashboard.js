@@ -5,56 +5,87 @@ import {
   FilmIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
-
-const stats = [
-  {
-    name: 'Total Tickets Sold',
-    value: '0',
-    icon: TicketIcon,
-    change: '+4.75%',
-    changeType: 'positive',
-  },
-  {
-    name: 'Total Revenue',
-    value: '$0.00',
-    icon: CurrencyDollarIcon,
-    change: '+54.02%',
-    changeType: 'positive',
-  },
-  {
-    name: 'Active Movies',
-    value: '0',
-    icon: FilmIcon,
-    change: '-1.39%',
-    changeType: 'negative',
-  },
-  {
-    name: 'Total Bookings',
-    value: '0',
-    icon: UserGroupIcon,
-    change: '+10.18%',
-    changeType: 'positive',
-  },
-];
+import { authFetch } from '../utils/authFetch';
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState([
+    {
+      name: 'Total Tickets Sold',
+      value: '0',
+      icon: TicketIcon,
+      change: '+0%',
+      changeType: 'positive',
+    },
+    {
+      name: 'Total Revenue',
+      value: '$0.00',
+      icon: CurrencyDollarIcon,
+      change: '+0%',
+      changeType: 'positive',
+    },
+    {
+      name: 'Active Movies',
+      value: '0',
+      icon: FilmIcon,
+      change: '+0%',
+      changeType: 'positive',
+    },
+    {
+      name: 'Total Bookings',
+      value: '0',
+      icon: UserGroupIcon,
+      change: '+0%',
+      changeType: 'positive',
+    },
+  ]);
 
   useEffect(() => {
-    // TODO: Fetch dashboard data from API
     const fetchData = async () => {
       try {
-        // const response = await axios.get('/api/admin/dashboard');
-        // Update stats with real data
+        const response = await authFetch('/api/admin/dashboard');
+        if (!response.ok) throw new Error('Failed to fetch dashboard data');
+        const data = await response.json();
+        setStats([
+          {
+            name: 'Total Tickets Sold',
+            value: data.todayStats?.totalTickets?.toString() || '0',
+            icon: TicketIcon,
+            change: '+0%',
+            changeType: 'positive',
+          },
+          {
+            name: 'Total Revenue',
+            value: data.todayStats?.totalRevenue ? `$${data.todayStats.totalRevenue}` : '$0.00',
+            icon: CurrencyDollarIcon,
+            change: '+0%',
+            changeType: 'positive',
+          },
+          {
+            name: 'Active Movies',
+            value: data.filmDistribution?.length?.toString() || '0',
+            icon: FilmIcon,
+            change: '+0%',
+            changeType: 'positive',
+          },
+          {
+            name: 'Total Bookings',
+            value: data.todayStats?.totalTickets?.toString() || '0',
+            icon: UserGroupIcon,
+            change: '+0%',
+            changeType: 'positive',
+          },
+        ]);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, []);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-gray-500 text-lg">Loading...</div>;
 
   return (
     <div>

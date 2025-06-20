@@ -5,6 +5,7 @@ import {
   TicketIcon,
   ShoppingCartIcon,
 } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 interface AnalyticsData {
   totalRevenue: number;
@@ -28,9 +29,20 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get(`/api/admin/analytics?timeRange=${timeRange}`);
-      // setData(response.data);
+      const response = await authFetch('/api/admin/dashboard');
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      const data = await response.json();
+      // Map backend data to frontend AnalyticsData shape as best as possible
+      setData({
+        totalRevenue: data.todayStats?.totalRevenue || 0,
+        totalTickets: data.todayStats?.totalTickets || 0,
+        totalBookings: data.filmDistribution?.length || 0,
+        totalAddons: 0, // Not available in this endpoint
+        revenueByDay: data.salesTrend?.map((d: any) => ({ date: d.date, amount: d.revenue })) || [],
+        topMovies: data.filmDistribution?.map((f: any) => ({ title: f.movieTitle, tickets: f.ticketsSold, revenue: 0 })) || [],
+        topAddons: [], // Not available in this endpoint
+        hourlyDistribution: [], // Not available in this endpoint
+      });
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching analytics:', error);

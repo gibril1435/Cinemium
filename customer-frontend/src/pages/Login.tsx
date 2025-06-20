@@ -10,71 +10,57 @@ const Login: React.FC = () => {
   const location = useLocation();
   const { login, loading } = useAuth();
 
-  // Show registration success message if redirected from registration
-  const registrationSuccessFromState = location.state && location.state.registrationSuccess;
-  const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(!!registrationSuccessFromState);
-
-  // Check if redirected from Buy Ticket (e.g., via state or query param)
-  const params = new URLSearchParams(location.search);
-  const redirectTo = params.get('redirectTo');
-  const seatOrderParams = params.get('seatOrderParams');
+  const from = location.state?.from;
+  const redirectTo = from ? `${from.pathname}${from.search}` : '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setShowRegistrationSuccess(false); // Hide the registration success message on any login attempt
+    
     try {
       await login(email, password);
-      if (redirectTo === 'seat-order' && seatOrderParams) {
-        navigate(`/seat-order?${seatOrderParams}`);
-      } else {
-        navigate('/');
-      }
+      navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError('Username atau password salah');
+      setError('Invalid email or password');
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen pt-8">
-      <form onSubmit={handleSubmit} className="auth-container">
-        <h2 className="auth-title">Login ke Akun</h2>
-        {showRegistrationSuccess && (
-          <div className="text-[var(--success)] mb-4">Registration succeed</div>
-        )}
-        {error && <div className="text-[var(--error)] mb-4">{error}</div>}
-        <div className="form-group">
-          <label className="form-label">Email</label>
+      <form onSubmit={handleSubmit} className="p-8 bg-gray-800 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">Login to Your Account</h2>
+        {error && <div className="bg-red-500 text-white p-3 rounded-md mb-4">{error}</div>}
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-2">Email</label>
           <input 
             type="email" 
             value={email} 
             onChange={e => setEmail(e.target.value)} 
             required 
-            className="input w-full" 
+            className="w-full p-3 bg-gray-700 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500" 
           />
         </div>
-        <div className="form-group">
-          <label className="form-label">Password</label>
+        <div className="mb-6">
+          <label className="block text-gray-300 mb-2">Password</label>
           <input 
             type="password" 
             value={password} 
             onChange={e => setPassword(e.target.value)} 
             required 
-            className="input w-full" 
+            className="w-full p-3 bg-gray-700 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500" 
           />
-        </div>
-        <div className="text-[var(--text-secondary)] text-xs mb-4">
-          Masukkan email dan password Anda untuk login.
         </div>
         <button 
           type="submit" 
-          className="btn btn-primary w-full" 
+          className="w-full bg-yellow-500 text-black font-bold py-3 rounded-md hover:bg-yellow-600 transition-colors duration-300 disabled:bg-gray-500" 
           disabled={loading}
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
-        <div className="mt-4 text-center">
-          <Link to="/register" className="auth-link">Buat Akun Sekarang</Link>
+        <div className="mt-6 text-center">
+          <Link to="/register" className="text-yellow-500 hover:underline">
+            Don't have an account? Register now
+          </Link>
         </div>
       </form>
     </div>

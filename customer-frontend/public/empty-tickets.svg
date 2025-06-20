@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="120" cy="120" r="120" fill="#1A1A1A"/>
+  
+  <!-- Ticket Shape -->
+  <path d="M60 80C60 74.4772 64.4772 70 70 70H170C175.523 70 180 74.4772 180 80V160C180 165.523 175.523 170 170 170H70C64.4772 170 60 165.523 60 160V80Z" fill="#2A2A2A"/>
+  
+  <!-- Ticket Details -->
+  <rect x="80" y="90" width="80" height="8" rx="4" fill="#404040"/>
+  <rect x="80" y="110" width="60" height="8" rx="4" fill="#404040"/>
+  <rect x="80" y="130" width="40" height="8" rx="4" fill="#404040"/>
+  
+  <!-- Dotted Line -->
+  <path d="M70 120H170" stroke="#404040" stroke-width="2" stroke-dasharray="4 4"/>
+  
+  <!-- Ticket Stub -->
+  <path d="M150 70V170" stroke="#404040" stroke-width="2" stroke-dasharray="4 4"/>
+  
+  <!-- Movie Icon -->
+  <circle cx="120" cy="100" r="15" stroke="#505050" stroke-width="2"/>
+  <path d="M115 95L127 100L115 105V95Z" fill="#505050"/>
+</svg> 

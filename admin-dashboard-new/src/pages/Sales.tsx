@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api';
+import React, { useEffect, useState, useCallback } from 'react';
+import { authFetch } from '../utils/authFetch';
 
 type SalesData = {
   totalRevenue: number;
@@ -21,22 +21,23 @@ const Sales: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-  useEffect(() => {
-    fetchSalesData();
-  }, [dateRange]);
-
-  const fetchSalesData = async () => {
+  const fetchSalesData = useCallback(async () => {
     try {
-      const response = await api.get('/admin/sales', {
-        params: dateRange
-      });
-      setSalesData(response.data);
+      const params = new URLSearchParams(dateRange as any).toString();
+      const response = await authFetch(`/admin/sales/weeks${params ? `?${params}` : ''}`);
+      if (!response.ok) throw new Error('Failed to load sales data');
+      const data = await response.json();
+      setSalesData(data);
       setLoading(false);
     } catch (err) {
       setError('Failed to load sales data');
       setLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchSalesData();
+  }, [fetchSalesData]);
 
   if (loading) return <div className="p-4">Loading sales data...</div>;
   if (error) return <div className="p-4 text-[var(--error)]">{error}</div>;

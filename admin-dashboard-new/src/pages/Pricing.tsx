@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 interface Price {
   id: number;
@@ -33,9 +34,10 @@ export default function Pricing() {
 
   const fetchPrices = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get('/api/admin/prices');
-      // setPrices(response.data);
+      const response = await authFetch('/ticketPrice');
+      if (!response.ok) throw new Error('Failed to fetch prices');
+      const data = await response.json();
+      setPrices(data);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching prices:', error);
@@ -51,11 +53,22 @@ export default function Pricing() {
         price: parseFloat(formData.price),
         dayOfWeek: formData.dayOfWeek ? parseInt(formData.dayOfWeek) : undefined,
       };
-
       if (selectedPrice) {
-        // await axios.put(`/api/admin/prices/${selectedPrice.id}`, priceData);
+        // Update price
+        const response = await authFetch(`/ticketPrice/${selectedPrice.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(priceData),
+        });
+        if (!response.ok) throw new Error('Failed to update price');
       } else {
-        // await axios.post('/api/admin/prices`, priceData);
+        // Create price
+        const response = await authFetch('/ticketPrice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(priceData),
+        });
+        if (!response.ok) throw new Error('Failed to create price');
       }
       setIsModalOpen(false);
       fetchPrices();
@@ -81,7 +94,10 @@ export default function Pricing() {
   const handleDelete = async (priceId: number) => {
     if (window.confirm('Are you sure you want to delete this price?')) {
       try {
-        // await axios.delete(`/api/admin/prices/${priceId}`);
+        const response = await authFetch(`/ticketPrice/${priceId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete price');
         fetchPrices();
       } catch (error) {
         console.error('Error deleting price:', error);
