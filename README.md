@@ -76,7 +76,7 @@ npm install
 npm start
 ```
 
-The admin dashboard will be running at `http://localhost:3001`.
+The admin dashboard will be running at `http://localhost:4000`.
 
 ## 📊 Database Schema
 
