@@ -110,5 +110,77 @@
     "totalAmount": 65000,
     "bookingDate": "2025-06-21T10:26:06.019Z",
     "status": "confirmed"
+  },
+  {
+    "bookingId": 25,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 125000,
+    "bookingDate": "2025-06-21T11:37:36.838Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 26,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 200000,
+    "bookingDate": "2025-06-21T11:37:47.598Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 27,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 150000,
+    "bookingDate": "2025-06-21T11:38:10.703Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 28,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 450000,
+    "bookingDate": "2025-06-21T11:38:21.447Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 29,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 425000,
+    "bookingDate": "2025-06-21T12:07:23.900Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 30,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 150000,
+    "bookingDate": "2025-06-21T12:07:33.772Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 31,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 500000,
+    "bookingDate": "2025-06-21T12:12:40.797Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 32,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 545000,
+    "bookingDate": "2025-06-21T12:22:49.846Z",
+    "status": "confirmed"
   }
 ]

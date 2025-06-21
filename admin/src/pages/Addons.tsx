@@ -18,6 +18,7 @@ import {
   Legend,
   CartesianGrid,
 } from 'recharts';
+import LoadingModal from '../components/LoadingModal';
 
 interface Addon {
   id: number;
@@ -40,6 +41,7 @@ interface AddOnSalesSummary {
 export default function Addons() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAddon, setSelectedAddon] = useState<Addon | null>(null);
@@ -116,7 +118,12 @@ export default function Addons() {
       }
 
       setIsModalOpen(false);
-      setTimeout(() => fetchAddons(), 3000);
+      setIsUpdating(true);
+      setTimeout(() => {
+        setIsUpdating(false);
+        fetchAddons();
+        fetchSalesSummary();
+      }, 4000);
     } catch (error: any) {
       console.error('Error saving add-on:', error);
       setError(error.message || 'Failed to save add-on. Please try again.');
@@ -144,7 +151,12 @@ export default function Addons() {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete add-on');
-        setTimeout(() => fetchAddons(), 3000);
+        setIsUpdating(true);
+        setTimeout(() => {
+          setIsUpdating(false);
+          fetchAddons();
+          fetchSalesSummary();
+        }, 4000);
       } catch (error) {
         console.error('Error deleting add-on:', error);
         setError('Failed to delete add-on. Please try again.');
@@ -161,12 +173,11 @@ export default function Addons() {
       });
       if (!response.ok) throw new Error('Failed to update status');
 
-      // Optimistically update UI
-      setAddons(addons.map(a =>
-        a.id === addon.id
-          ? { ...a, isActive: !a.isActive, status: a.status === 'active' ? 'inactive' : 'active' }
-          : a
-      ));
+      setIsUpdating(true);
+      setTimeout(() => {
+        setIsUpdating(false);
+        fetchAddons();
+      }, 4000);
     } catch (error) {
       console.error('Error toggling addon status:', error);
       setError('Failed to update status. Please try again.');
@@ -193,11 +204,26 @@ export default function Addons() {
   });
 
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading add-ons...</div>;
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 animate-pulse">
+        <div className="sm:flex sm:items-center sm:justify-between mb-8">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded w-36 mt-4 sm:mt-0"></div>
+        </div>
+        <div className="h-80 bg-gray-200 rounded-lg mb-8"></div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+        </div>
+        <div className="bg-gray-200 rounded-lg h-96"></div>
+      </div>
+    );
   }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <LoadingModal isOpen={isUpdating} message="Updating data..." />
       <div className="sm:flex sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Add-ons</h1>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">

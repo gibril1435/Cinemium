@@ -1,9 +1,88 @@
 const express = require('express');
 const router = express.Router();
 const { readTable, writeTable } = require('../utils/jsonDb');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, isAdmin } = require('../middleware/auth');
 const QRCode = require('qrcode');
 const { generateTicketPDF } = require('../utils/pdfGenerator');
+
+// Admin: Get all bookings
+router.get('/', authenticate, isAdmin, (req, res) => {
+    try {
+        const bookings = readTable('Bookings');
+        const users = readTable('Users');
+        const showtimes = readTable('Showtimes');
+        const movies = readTable('Movies');
+        const bookingSeats = readTable('BookingSeats');
+
+        const allBookings = bookings.map(booking => {
+            const user = users.find(u => u.userId === booking.userId) || {};
+            const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
+            const movie = movies.find(m => m.movieId == showtime?.movieId);
+            const seats = bookingSeats
+                .filter(bs => bs.bookingId == booking.bookingId)
+                .map(bs => bs.seatNumber);
+
+            // Determine status (handle future showtimes)
+            let status = booking.status;
+            if (status === 'confirmed' && showtime && new Date(showtime.showDateTime) < new Date()) {
+                status = 'completed';
+            }
+
+            return {
+                bookingId: booking.bookingId,
+                user: {
+                    username: user.username,
+                    email: user.email,
+                },
+                seats: seats,
+                totalAmount: booking.totalAmount,
+                status: status,
+                bookingDate: booking.bookingDate,
+                movieTitle: movie ? movie.title : 'Unknown Movie',
+                posterUrl: movie ? movie.posterUrl : '',
+                showtimeDate: showtime ? showtime.showDateTime : 'Unknown Showtime',
+            };
+        });
+
+        res.json(allBookings);
+    } catch (error) {
+        console.error('Error fetching all bookings:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to fetch all bookings'
+        });
+    }
+});
+
+// Admin: Update booking status
+router.put('/:bookingId', authenticate, isAdmin, (req, res) => {
+    try {
+        const { status } = req.body;
+        const { bookingId } = req.params;
+
+        if (!status) {
+            return res.status(400).json({ error: 'Status is required' });
+        }
+
+        const bookings = readTable('Bookings');
+        const bookingIndex = bookings.findIndex(b => b.bookingId == bookingId);
+
+        if (bookingIndex === -1) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        bookings[bookingIndex].status = status;
+        writeTable('Bookings', bookings);
+
+        res.json(bookings[bookingIndex]);
+    } catch (error) {
+        console.error('Error updating booking status:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to update booking status'
+        });
+    }
+});
 
 /**
  * @swagger
@@ -463,24 +542,41 @@ router.get('/:bookingId', authenticate, (req, res) => {
 // Cancel booking
 router.delete('/:bookingId', authenticate, (req, res) => {
   try {
-    const userId = req.user.userId;
-    
-    // Validate userId from JWT
-    if (!userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Invalid user token'
-      });
+    const users = readTable('Users');
+    const requestingUser = users.find(u => u.userId === req.user.userId);
+
+    if (!requestingUser) {
+        return res.status(401).json({ error: 'Unauthorized', message: 'User not found' });
+    }
+
+    let bookings = readTable('Bookings');
+    const bookingIndex = bookings.findIndex(b => b.bookingId == req.params.bookingId);
+
+    if (bookingIndex === -1) {
+        return res.status(404).json({ error: 'Not Found', message: 'Booking not found' });
     }
     
-    let bookings = readTable('Bookings');
-    const booking = bookings.find(b => b.bookingId == req.params.bookingId && b.userId && b.userId === userId);
-    
-    if (!booking) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Booking not found'
-      });
+    const booking = bookings[bookingIndex];
+
+    // Admin can delete any booking
+    if (requestingUser.role === 'admin') {
+        bookings.splice(bookingIndex, 1);
+        writeTable('Bookings', bookings);
+
+        let bookingSeats = readTable('BookingSeats');
+        bookingSeats = bookingSeats.filter(bs => bs.bookingId != req.params.bookingId);
+        writeTable('BookingSeats', bookingSeats);
+
+        let addOnSales = readTable('AddOnSales');
+        addOnSales = addOnSales.filter(aos => aos.bookingId != req.params.bookingId);
+        writeTable('AddOnSales', addOnSales);
+        
+        return res.json({ message: 'Booking deleted successfully', bookingId: req.params.bookingId });
+    }
+
+    // User can only cancel their own booking
+    if (booking.userId !== req.user.userId) {
+        return res.status(403).json({ error: 'Forbidden', message: 'You can only cancel your own bookings.' });
     }
     
     // Check if booking can be cancelled (e.g., not within 2 hours of showtime)
@@ -489,7 +585,7 @@ router.delete('/:bookingId', authenticate, (req, res) => {
     if (showtime) {
       const showtimeDate = new Date(showtime.showDateTime);
       const now = new Date();
-      const hoursUntilShowtime = (showtimeDate - now) / (1000 * 60 * 60);
+      const hoursUntilShowtime = (showtimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
       
       if (hoursUntilShowtime < 2) {
         return res.status(400).json({
@@ -500,7 +596,6 @@ router.delete('/:bookingId', authenticate, (req, res) => {
     }
     
     // Update booking status
-    const bookingIndex = bookings.findIndex(b => b.bookingId == req.params.bookingId);
     bookings[bookingIndex].status = 'cancelled';
     writeTable('Bookings', bookings);
     

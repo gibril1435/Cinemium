@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, FilmIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { authFetch } from '../utils/authFetch';
+import LoadingModal from '../components/LoadingModal';
 
 export default function Movies() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -70,7 +72,11 @@ export default function Movies() {
         if (!response.ok) throw new Error('Failed to create movie');
       }
       setIsModalOpen(false);
-      setTimeout(() => fetchMovies(), 3000);
+      setIsUpdating(true);
+      setTimeout(() => {
+        setIsUpdating(false);
+        fetchMovies();
+      }, 4000);
     } catch (error) {
       console.error('Error saving movie:', error);
       setError('Failed to save movie. Please try again.');
@@ -102,7 +108,11 @@ export default function Movies() {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete movie');
-        setTimeout(() => fetchMovies(), 3000);
+        setIsUpdating(true);
+        setTimeout(() => {
+          setIsUpdating(false);
+          fetchMovies();
+        }, 4000);
       } catch (error) {
         console.error('Error deleting movie:', error);
         setError('Failed to delete movie. Please try again.');
@@ -122,9 +132,11 @@ export default function Movies() {
         throw new Error('Failed to update status');
       }
 
-      setMovies(movies.map(m =>
-        m.movieId === movie.movieId ? { ...m, isActive: !movie.isActive } : m
-      ));
+      setIsUpdating(true);
+      setTimeout(() => {
+        setIsUpdating(false);
+        fetchMovies();
+      }, 4000);
     } catch (error) {
       console.error('Error toggling movie status:', error);
       setError('Failed to update movie status. Please try again.');
@@ -161,8 +173,17 @@ export default function Movies() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500 text-lg">Loading movies...</div>
+      <div className="p-4 sm:p-6 lg:p-8 animate-pulse">
+        <div className="sm:flex sm:items-center sm:justify-between mb-8">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded w-32 mt-4 sm:mt-0"></div>
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+        </div>
+        <div className="bg-gray-200 rounded-lg h-96"></div>
       </div>
     );
   }
@@ -177,6 +198,7 @@ export default function Movies() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <LoadingModal isOpen={isUpdating} message="Updating movies..." />
       <div className="sm:flex sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Movies Dashboard</h1>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">

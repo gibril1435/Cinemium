@@ -36,7 +36,7 @@ const PaymentSuccess: React.FC = () => {
 
     const fetchBookingData = async () => {
       try {
-        const bookingRes = await api.get(`/booking/${bookingId}`);
+        const bookingRes = await api.get(`/bookings/${bookingId}`);
         const bookingData = bookingRes.data;
 
         setBooking(bookingData);

@@ -4,6 +4,12 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}) {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
+
+  // Add 2-second delay for GET requests
+  if (!init.method || init.method.toUpperCase() === 'GET') {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
   return fetch(input, { ...init, headers });
 }
 

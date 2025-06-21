@@ -4,7 +4,7 @@
     "name": "Popcorn",
     "description": "Large popcorn",
     "price": 25000,
-    "stock": 81,
+    "stock": 42,
     "isActive": true,
     "category": "Foods",
     "imageUrl": "https://images-na.ssl-images-amazon.com/images/I/81WacyKUTcL._AC_SL1500_.jpg"
@@ -13,10 +13,20 @@
     "name": "Soda",
     "description": "Minuman bersoda",
     "price": 15000,
-    "stock": 47,
+    "stock": 40,
     "category": "Beverage",
     "imageUrl": "https://down-id.img.susercontent.com/file/id-11134201-7r98s-luef94p1yx7ze2",
     "isActive": true,
     "addOnId": 2
+  },
+  {
+    "name": "Mi goreng",
+    "description": "Mi goreng",
+    "price": 20000,
+    "stock": 76,
+    "category": "Food",
+    "imageUrl": "https://m.media-amazon.com/images/I/81u54xIzNyL._SL1500_.jpg",
+    "isActive": true,
+    "addOnId": 3
   }
 ]

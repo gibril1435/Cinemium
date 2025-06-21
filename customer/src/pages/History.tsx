@@ -21,7 +21,7 @@ const History: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/booking/history')
+    api.get('/bookings/history')
       .then(res => {
         setHistory(res.data || []);
         setLoading(false);
@@ -35,7 +35,7 @@ const History: React.FC = () => {
 
   const handleDownloadTicket = async (bookingId: string) => {
     try {
-      const response = await api.get(`/booking/${bookingId}/ticket`, { responseType: 'blob' });
+      const response = await api.get(`/bookings/${bookingId}/ticket`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;

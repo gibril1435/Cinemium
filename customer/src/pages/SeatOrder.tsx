@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
+import LoadingModal from '../components/LoadingModal';
 
 // Types
 interface Seat {
@@ -33,6 +34,7 @@ const SeatOrder: React.FC = () => {
   const [addOns, setAddOns] = useState<AddOn[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<{ [id: number]: number }>({});
   const [notification, setNotification] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const ROWS = 5;
   const COLS = 8;
@@ -46,8 +48,8 @@ const SeatOrder: React.FC = () => {
       setLoading(true);
       try {
         const [showtimeRes, seatsRes, addOnsRes] = await Promise.all([
-          api.get(`/booking/showtimes/${showtimeId}`),
-          api.get(`/booking/showtimes/${showtimeId}/seats`),
+          api.get(`/bookings/showtimes/${showtimeId}`),
+          api.get(`/bookings/showtimes/${showtimeId}/seats`),
           api.get('/addons'),
         ]);
 
@@ -104,21 +106,25 @@ const SeatOrder: React.FC = () => {
       return;
     }
     setPaying(true);
-    try {
-      const addOnsToSend = Object.entries(selectedAddOns)
-        .filter(([_, qty]) => qty > 0)
-        .map(([id, qty]) => ({ id: Number(id), quantity: qty }));
-      const res = await api.post('/booking/transactions', {
-        showtimeId,
-        seats: selectedSeats,
-        addOns: addOnsToSend,
-      });
-      navigate(`/payment-success?bookingId=${res.data.booking.bookingId}`);
-    } catch (err) {
-      setError('Payment failed. Please try again.');
-    } finally {
-      setPaying(false);
-    }
+    setIsProcessing(true);
+
+    setTimeout(async () => {
+      try {
+        const addOnsToSend = Object.entries(selectedAddOns)
+          .filter(([_, qty]) => qty > 0)
+          .map(([id, qty]) => ({ id: Number(id), quantity: qty }));
+        const res = await api.post('/bookings/transactions', {
+          showtimeId,
+          seats: selectedSeats,
+          addOns: addOnsToSend,
+        });
+        navigate(`/payment-success?bookingId=${res.data.booking.bookingId}`);
+      } catch (err) {
+        setError('Payment failed. Please try again.');
+        setIsProcessing(false);
+        setPaying(false);
+      }
+    }, 4000);
   };
 
   if (loading) {
@@ -170,6 +176,7 @@ const SeatOrder: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 py-8">
+      <LoadingModal isOpen={isProcessing} />
       {notification && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in-out">
           {notification}
@@ -279,6 +286,12 @@ const SeatOrder: React.FC = () => {
                         key={addOn.id} 
                         className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700/50 transition-colors"
                       >
+                        <img
+                          src={addOn.imageUrl || 'https://via.placeholder.com/64'}
+                          alt={addOn.name}
+                          className="w-16 h-16 rounded-md object-cover flex-shrink-0"
+                          onError={(e) => { (e.target as any).src = 'https://via.placeholder.com/64'; }}
+                        />
                         <div className="flex-1">
                           <h3 className="font-medium text-white mb-1">{addOn.name}</h3>
                           <p className="text-sm text-gray-400 mb-2">{addOn.description}</p>

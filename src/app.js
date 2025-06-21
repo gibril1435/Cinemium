@@ -66,7 +66,7 @@ app.use('/api/promotions', (req, res, next) => {
   }
   next();
 });
-app.use('/api/booking', bookingRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/addons', addonsRoutes);
 app.use('/api/admin/studios', studiosRoutes);

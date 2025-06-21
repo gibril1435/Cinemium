@@ -9,6 +9,7 @@ import {
   XCircleIcon,
 } from '@heroicons/react/24/outline';
 import { authFetch, formatRupiah } from '../utils/authFetch';
+import LoadingModal from '../components/LoadingModal';
 
 interface Showtime {
   id: number;
@@ -37,6 +38,7 @@ export default function Showtimes() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(null);
@@ -113,7 +115,11 @@ export default function Showtimes() {
         if (!response.ok) throw new Error('Failed to create showtime');
       }
       setIsModalOpen(false);
-      setTimeout(() => fetchShowtimes(), 3000);
+      setIsUpdating(true);
+      setTimeout(() => {
+        setIsUpdating(false);
+        fetchShowtimes();
+      }, 4000);
     } catch (error) {
       console.error('Error saving showtime:', error);
       setError('Failed to save showtime. Please try again.');
@@ -139,7 +145,11 @@ export default function Showtimes() {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete showtime');
-        setTimeout(() => fetchShowtimes(), 3000);
+        setIsUpdating(true);
+        setTimeout(() => {
+          setIsUpdating(false);
+          fetchShowtimes();
+        }, 4000);
       } catch (error) {
         console.error('Error deleting showtime:', error);
         setError('Failed to delete showtime. Please try again.');
@@ -161,12 +171,11 @@ export default function Showtimes() {
         throw new Error('Failed to update status');
       }
 
-      // Optimistically update the UI
-      setShowtimes(showtimes.map(s =>
-        s.id === showtime.id
-          ? { ...s, isActive: !s.isActive, status: s.status === 'scheduled' ? 'cancelled' : 'scheduled' }
-          : s
-      ));
+      setIsUpdating(true);
+      setTimeout(() => {
+        setIsUpdating(false);
+        fetchShowtimes();
+      }, 4000);
     } catch (error) {
       console.error('Error toggling showtime status:', error);
       setError('Failed to update showtime status. Please try again.');
@@ -185,8 +194,18 @@ export default function Showtimes() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500 text-lg">Loading showtimes...</div>
+      <div className="p-4 sm:p-6 lg:p-8 animate-pulse">
+        <div className="sm:flex sm:items-center sm:justify-between mb-8">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded w-40 mt-4 sm:mt-0"></div>
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+          <div className="h-28 bg-gray-200 rounded-xl"></div>
+        </div>
+        <div className="bg-gray-200 rounded-lg h-96"></div>
       </div>
     );
   }
@@ -201,6 +220,7 @@ export default function Showtimes() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <LoadingModal isOpen={isUpdating} message="Updating showtimes..." />
       <div className="sm:flex sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Showtimes</h1>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
