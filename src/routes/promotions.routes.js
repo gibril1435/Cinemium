@@ -36,14 +36,4 @@ router.put('/:id', (req, res) => {
   res.json(promotions[idx]);
 });
 
-// Delete a promotion
-router.delete('/:id', (req, res) => {
-  let promotions = readTable('Promotions');
-  const idx = promotions.findIndex(p => p.promotionId == req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Promotion not found' });
-  const deleted = promotions.splice(idx, 1)[0];
-  writeTable('Promotions', promotions);
-  res.json(deleted);
-});
-
 module.exports = router; 

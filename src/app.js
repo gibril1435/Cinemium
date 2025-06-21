@@ -15,10 +15,8 @@ const adminRoutes = require('./routes/admin.routes');
 const addonsRoutes = require('./routes/addons.routes');
 const studiosRoutes = require('./routes/studios.routes');
 const promotionController = require('./controllers/promotionController');
-const adminPromotionRoutes = require('./routes/admin/promotions.routes');
 const addOnSalesRoutes = require('./routes/admin/addOnSales.routes');
 const showtimesRoutes = require('./routes/showtimes.routes');
-const bookingsRoutes = require('./routes/bookings.routes');
 
 // Import tasks
 const { toCamelCaseDeep } = require('./utils/caseUtils');
@@ -68,14 +66,12 @@ app.use('/api/promotions', (req, res, next) => {
   }
   next();
 });
-app.use('/api/admin/promotions', adminPromotionRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/addons', addonsRoutes);
 app.use('/api/admin/studios', studiosRoutes);
-app.use('/api/admin/addon-sales', addOnSalesRoutes);
+app.use('/api/admin/addOnSales', addOnSalesRoutes);
 app.use('/api/showtimes', showtimesRoutes);
-app.use('/api/bookings', bookingsRoutes);
 
 // Middleware to enforce camelCase on all outgoing JSON responses
 app.use((req, res, next) => {

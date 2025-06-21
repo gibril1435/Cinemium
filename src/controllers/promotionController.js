@@ -40,18 +40,6 @@ exports.updatePromotion = (req, res) => {
   res.json(updatedPromotion);
 };
 
-// Delete promotion (admin only)
-exports.deletePromotion = (req, res) => {
-  const promotions = readTable('Promotions');
-  const promotion = promotions.find(p => p.promotionId === parseInt(req.params.id));
-  if (!promotion) {
-    return res.status(404).json({ error: 'Promotion not found' });
-  }
-  const filteredPromotions = promotions.filter(p => p.promotionId !== parseInt(req.params.id));
-  writeTable('Promotions', filteredPromotions);
-  res.status(204).send();
-};
-
 // Get all promotions (admin only)
 exports.getAllPromotions = (req, res) => {
   const promotions = readTable('Promotions');

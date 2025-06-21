@@ -8,6 +8,16 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { authFetch, formatRupiah } from '../utils/authFetch';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  CartesianGrid,
+} from 'recharts';
 
 interface Addon {
   id: number;
@@ -19,6 +29,12 @@ interface Addon {
   category: string;
   status: 'active' | 'inactive';
   isActive: boolean;
+}
+
+interface AddOnSalesSummary {
+  addOnId: number;
+  totalQuantity: number;
+  totalRevenue: number;
 }
 
 export default function Addons() {
@@ -36,9 +52,11 @@ export default function Addons() {
     imageUrl: '',
     isActive: true,
   });
+  const [salesSummary, setSalesSummary] = useState<AddOnSalesSummary[]>([]);
 
   useEffect(() => {
     fetchAddons();
+    fetchSalesSummary();
   }, []);
 
   const fetchAddons = async () => {
@@ -57,6 +75,17 @@ export default function Addons() {
       setError('Failed to load add-ons. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSalesSummary = async () => {
+    try {
+      const response = await authFetch('/api/admin/addOnSales/summary');
+      if (!response.ok) throw new Error('Failed to fetch add-on sales summary');
+      const data = await response.json();
+      setSalesSummary(data);
+    } catch (error) {
+      console.error('Error fetching add-on sales summary:', error);
     }
   };
 
@@ -152,6 +181,17 @@ export default function Addons() {
     { name: 'Out of Stock', value: outOfStockAddons, icon: ExclamationCircleIcon },
   ];
 
+  // Place this above the table rendering:
+  // Chart Data Preparation
+  const chartData = salesSummary.map((summary) => {
+    const addon = addons.find((a) => a.id === summary.addOnId);
+    return {
+      name: addon ? addon.name : `Add-on ${summary.addOnId}`,
+      totalQuantity: summary.totalQuantity,
+      totalRevenue: summary.totalRevenue,
+    };
+  });
+
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500">Loading add-ons...</div>;
   }
@@ -181,6 +221,25 @@ export default function Addons() {
             <PlusIcon className="mr-2 h-5 w-5" />
             Add Add-on
           </button>
+        </div>
+      </div>
+
+      {/* Add-on Sales Chart */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Add-on Sales Chart</h2>
+        <div className="bg-white rounded-lg shadow p-4">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" hide />
+              <Tooltip formatter={(value: any, name: string) => name === 'totalRevenue' ? formatRupiah(value) : value} />
+              <Legend />
+              <Bar yAxisId="left" dataKey="totalQuantity" fill="#8884d8" name="Total Sold" />
+              <Bar yAxisId="right" dataKey="totalRevenue" fill="#82ca9d" name="Total Revenue" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

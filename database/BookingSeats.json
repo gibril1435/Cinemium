@@ -52,5 +52,83 @@
     "bookingId": 19,
     "showtimeId": 4,
     "seatNumber": "C6"
+  },
+  {
+    "bookingSeatId": 21,
+    "bookingId": 20,
+    "showtimeId": 4,
+    "seatNumber": "B7"
+  },
+  {
+    "bookingSeatId": 22,
+    "bookingId": 20,
+    "showtimeId": 4,
+    "seatNumber": "B6"
+  },
+  {
+    "bookingSeatId": 23,
+    "bookingId": 20,
+    "showtimeId": 4,
+    "seatNumber": "B4"
+  },
+  {
+    "bookingSeatId": 24,
+    "bookingId": 20,
+    "showtimeId": 4,
+    "seatNumber": "B5"
+  },
+  {
+    "bookingSeatId": 25,
+    "bookingId": 21,
+    "showtimeId": 4,
+    "seatNumber": "C7"
+  },
+  {
+    "bookingSeatId": 26,
+    "bookingId": 21,
+    "showtimeId": 4,
+    "seatNumber": "D7"
+  },
+  {
+    "bookingSeatId": 27,
+    "bookingId": 21,
+    "showtimeId": 4,
+    "seatNumber": "D6"
+  },
+  {
+    "bookingSeatId": 28,
+    "bookingId": 21,
+    "showtimeId": 4,
+    "seatNumber": "D5"
+  },
+  {
+    "bookingSeatId": 29,
+    "bookingId": 22,
+    "showtimeId": 4,
+    "seatNumber": "E7"
+  },
+  {
+    "bookingSeatId": 30,
+    "bookingId": 22,
+    "showtimeId": 4,
+    "seatNumber": "E6"
+  },
+  {
+    "bookingSeatId": 31,
+    "bookingId": 23,
+    "showtimeId": 4,
+    "seatNumber": "A4"
+  },
+  {
+    "bookingSeatId": 32,
+    "bookingId": 23,
+    "showtimeId": 4,
+    "seatNumber": "A3"
+  },
+  {
+    "bookingSeatId": 33,
+    "bookingId": 24,
+    "showtimeId": 4,
+    "seatNumber": "E5"
   }
 ]

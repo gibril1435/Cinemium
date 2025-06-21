@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { readTable, writeTable } = require('../../utils/jsonDb');
+const { readTable } = require('../../utils/jsonDb');
 
 // Get all add-on sales
 router.get('/', (req, res) => {
@@ -8,42 +8,26 @@ router.get('/', (req, res) => {
   res.json(addOnSales);
 });
 
-// Get an add-on sale by ID
-router.get('/:id', (req, res) => {
+// Get add-on sales by addOnId
+router.get('/addon/:addOnId', (req, res) => {
   const addOnSales = readTable('AddOnSales');
-  const sale = addOnSales.find(s => s.addOnSaleId == req.params.id);
-  if (!sale) return res.status(404).json({ error: 'AddOnSale not found' });
-  res.json(sale);
+  const filtered = addOnSales.filter(sale => sale.addOnId == req.params.addOnId);
+  res.json(filtered);
 });
 
-// Create a new add-on sale
-router.post('/', (req, res) => {
+// Get add-on sales summary (total quantity and revenue per add-on)
+router.get('/summary', (req, res) => {
   const addOnSales = readTable('AddOnSales');
-  const newId = addOnSales.length ? Math.max(...addOnSales.map(s => s.addOnSaleId)) + 1 : 1;
-  const newSale = { ...req.body, addOnSaleId: newId };
-  addOnSales.push(newSale);
-  writeTable('AddOnSales', addOnSales);
-  res.status(201).json(newSale);
-});
-
-// Update an add-on sale
-router.put('/:id', (req, res) => {
-  const addOnSales = readTable('AddOnSales');
-  const idx = addOnSales.findIndex(s => s.addOnSaleId == req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'AddOnSale not found' });
-  addOnSales[idx] = { ...addOnSales[idx], ...req.body };
-  writeTable('AddOnSales', addOnSales);
-  res.json(addOnSales[idx]);
-});
-
-// Delete an add-on sale
-router.delete('/:id', (req, res) => {
-  let addOnSales = readTable('AddOnSales');
-  const idx = addOnSales.findIndex(s => s.addOnSaleId == req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'AddOnSale not found' });
-  const deleted = addOnSales.splice(idx, 1)[0];
-  writeTable('AddOnSales', addOnSales);
-  res.json(deleted);
+  const summary = {};
+  addOnSales.forEach(sale => {
+    const id = sale.addOnId;
+    if (!summary[id]) {
+      summary[id] = { addOnId: id, totalQuantity: 0, totalRevenue: 0 };
+    }
+    summary[id].totalQuantity += sale.quantity || sale.Quantity || 0;
+    summary[id].totalRevenue += sale.TotalPrice || (sale.unitPrice * sale.quantity) || 0;
+  });
+  res.json(Object.values(summary));
 });
 
 module.exports = router; 
