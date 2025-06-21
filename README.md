@@ -7,8 +7,8 @@ A comprehensive cinema management system with customer booking interface and adm
 ```
 Cinemium/
 ├── src/                    # Backend API (Node.js/Express)
-├── customer-frontend/      # Customer booking interface (React/TypeScript)
-├── admin-dashboard-new/    # Admin dashboard (React/TypeScript)
+├── customer/               # Customer booking interface (React/TypeScript)
+├── admin/                  # Admin dashboard (React/TypeScript)
 ├── cinemium.sql           # Database schema and dummy data
 └── README.md              # This file
 ```
@@ -49,7 +49,7 @@ The backend will run on `http://localhost:5000`
 ### 3. Customer Frontend Setup
 
 ```bash
-cd customer-frontend
+cd customer
 
 # Install dependencies
 npm install
@@ -66,7 +66,7 @@ The customer frontend will run on `http://localhost:3000`
 ### 4. Admin Dashboard Setup
 
 ```bash
-cd admin-dashboard-new
+cd admin
 
 # Install dependencies
 npm install
