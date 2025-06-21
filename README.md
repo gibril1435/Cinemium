@@ -125,3 +125,30 @@ The Cinemium application uses a robust JWT-based authentication system with the 
   * **Add-On Management**: Full CRUD functionality for add-on items like food and beverages.
   * **Pricing Configuration**: Set default and custom ticket prices for different days or events.
   * **Promotion Management**: Create and manage promotional offers for customers.
+
+## 🔐 Backend Roles & Permissions
+
+The backend employs a straightforward and effective role-based access control (RBAC) system to secure endpoints and differentiate user capabilities. This is primarily managed through JWT authentication and custom middleware that checks user roles.
+
+The two main roles in the system are:
+
+### **1. Customer**
+This is the default role for any new user who registers on the platform. Their permissions are scoped to the customer-facing application.
+
+* **Authentication**: Can register, log in, and log out.
+* **Movie & Showtime Information**: Can browse and view details for all currently showing movies and their showtimes.
+* **Booking**: Can view seat layouts for showtimes, create new bookings for themselves, and purchase add-ons.
+* **Booking History**: Can access their personal booking history and view their digital tickets.
+
+### **2. Admin**
+This is a privileged role assigned manually within the database. Admins have full control over the cinema's data and operations via the admin dashboard.
+
+* **Secure Access**: All admin-level API routes are protected by an `isAdmin` middleware, which verifies that the user has the `admin` role before allowing access. Unauthorized users attempting to access these routes will receive a `403 Forbidden` error.
+* **Comprehensive Management**: Admins have full CRUD (Create, Read, Update, Delete) capabilities over all major data models, including:
+    * Movies
+    * Showtimes
+    * Studios & Seats
+    * Promotions
+    * Add-Ons (concessions)
+* **Business Analytics**: Can access the main dashboard to view sales figures, top-performing movies, and other key metrics.
+* **Sales Data**: Can view detailed transaction reports and filter them by various criteria.
