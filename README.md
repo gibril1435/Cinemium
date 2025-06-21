@@ -1,213 +1,127 @@
 # Cinemium - Cinema Management System
 
-A comprehensive cinema management system with customer booking interface and admin dashboard.
+A comprehensive cinema management system with a customer-facing booking interface and a full-featured admin dashboard. This project is built with a Node.js/Express backend, and two separate React/TypeScript frontends for the customer and admin interfaces.
+
+## Demo
+
+[Cinemium Demo Video](https://www.youtube.com/watch?v=oGGMkw8ANyc)
+
+## Academic Report
+
+[View the Academic Report (Google Docs)](https://docs.google.com/document/d/12345/edit?usp=sharing)
 
 ## 🏗️ Project Structure
 
+The project is organized into the following main directories:
+
 ```
 Cinemium/
-├── src/                    # Backend API (Node.js/Express)
-├── customer/               # Customer booking interface (React/TypeScript)
-├── admin/                  # Admin dashboard (React/TypeScript)
-├── cinemium.sql           # Database schema and dummy data
-└── README.md              # This file
+├── src/            # Backend API (Node.js/Express)
+│   ├── controllers/
+│   ├── middleware/
+│   └── routes/
+├── customer/       # Customer booking interface (React/TypeScript)
+├── admin/          # Admin dashboard (React/TypeScript)
+├── database/       # JSON-based database files
+├── docs/           # Documentation files
+└── README.md
 ```
 
 ## 🚀 Quick Start
 
+To get the project up and running locally, follow these steps:
+
 ### Prerequisites
 
-- **Node.js** (v14 or higher)
-- **SQL Server** (Express or Developer edition)
-- **npm** or **yarn**
+  * **Node.js** (v14 or higher)
+  * **npm** or **yarn**
 
-### 1. Database Setup
-
-1. Install SQL Server if you haven't already
-2. Open SQL Server Management Studio or Azure Data Studio
-3. Run the `cinemium.sql` file to create the database and tables
-4. Note down your database credentials
-
-### 2. Backend Setup
+### 1\. Backend Setup
 
 ```bash
-# Install dependencies
+# Install dependencies from the root directory
 npm install
-
-# Copy environment file
-cp env.example .env
-
-# Edit .env with your database credentials
-# Update DB_USER, DB_PASS, and JWT_SECRET
 
 # Start the server
 npm run dev
 ```
 
-The backend will run on `http://localhost:5000`
+The backend API will be available at `http://localhost:5000`.
 
-### 3. Customer Frontend Setup
+### 2\. Customer Frontend Setup
 
 ```bash
+# Navigate to the customer directory
 cd customer
 
 # Install dependencies
 npm install
 
-# Copy environment file
-cp env.example .env
-
 # Start the development server
 npm start
 ```
 
-The customer frontend will run on `http://localhost:3000`
+The customer-facing application will be running at `http://localhost:3000`.
 
-### 4. Admin Dashboard Setup
+### 3\. Admin Dashboard Setup
 
 ```bash
+# Navigate to the admin directory
 cd admin
 
 # Install dependencies
 npm install
 
-# Copy environment file
-cp env.example .env
-
 # Start the development server
 npm start
 ```
 
-The admin dashboard will run on `http://localhost:3001`
-
-## 🔧 Environment Variables
-
-### Backend (.env)
-```env
-NODE_ENV=development
-PORT=5000
-DB_HOST=localhost
-DB_NAME=Cinemium
-DB_USER=your_username
-DB_PASS=your_password
-JWT_SECRET=your_super_secret_jwt_key_here_make_it_long_and_random
-CORS_ORIGIN=http://localhost:3000,http://localhost:3001
-LOG_LEVEL=debug
-BCRYPT_ROUNDS=10
-```
-
-### Frontend (.env)
-```env
-REACT_APP_API_BASE_URL=http://localhost:5000/api
-REACT_APP_ENV=development
-REACT_APP_ENABLE_ANALYTICS=false
-REACT_APP_ENABLE_DEBUG=true
-```
+The admin dashboard will be running at `http://localhost:3001`.
 
 ## 📊 Database Schema
 
-The system includes the following main entities:
-- **Users** - Customer and admin accounts
-- **Movies** - Film information and metadata
-- **Studios** - Cinema rooms with seating capacity
-- **Showtimes** - Movie screening schedules
-- **Seats** - Individual seat management
-- **Bookings** - Customer reservations
-- **AddOns** - Concessions and additional services
+The application uses a JSON-based database, with the following main data models:
+
+  * **Users**: Stores customer and admin account information.
+  * **Movies**: Contains film details, including metadata like genre, director, and cast.
+  * **Studios**: Defines the cinema rooms and their seating capacity.
+  * **Showtimes**: Manages the screening schedules for movies.
+  * **Seats**: Handles individual seat management within each studio.
+  * **Bookings**: Stores customer reservations and transaction details.
+  * **AddOns**: Manages concession items and other additional services.
+  * **Promotions**: Contains details about active promotional offers.
 
 ## 🔐 Authentication
 
-- JWT-based authentication
-- Role-based access control (Admin/User)
-- Secure password hashing with bcrypt
+The Cinemium application uses a robust JWT-based authentication system with the following features:
+
+  * **Token-Based Security**: Secure authentication using JSON Web Tokens (JWT).
+  * **Role-Based Access Control**: Differentiates between 'Admin' and 'User' roles, ensuring proper access levels.
+  * **Secure Password Storage**: Passwords are not stored in plaintext; they are securely hashed using bcrypt.
+  * **Protected Routes**: Middleware is used to protect sensitive routes, ensuring only authenticated and authorized users can access them.
 
 ## 🎯 Features
 
-### Customer Features
-- Browse movies and showtimes
-- Select seats and make bookings
-- Purchase add-ons (concessions)
-- View booking history
-- User registration and login
+### Customer-Facing Application
 
-### Admin Features
-- Movie management
-- Studio and seat management
-- Showtime scheduling
-- Booking management
-- Sales analytics
-- User management
-- Promotion management
+  * **Movie Browse**: Browse a list of currently showing movies with details like posters, titles, genres, and prices.
+  * **Dynamic Search**: Easily search for movies by title or genre.
+  * **Detailed Movie Information**: View comprehensive details for each movie, including synopsis, cast, director, and production house.
+  * **Showtime Selection**: See all available showtimes for a selected movie.
+  * **Visual Seat Selection**: An interactive 8x5 grid allows users to visually select up to 4 seats.
+  * **Add-On Purchases**: Option to purchase add-ons like popcorn and soda along with movie tickets.
+  * **User Authentication**: Secure user registration and login functionality.
+  * **Booking History**: View a comprehensive history of all past ticket purchases, grouped by date.
+  * **Digital Tickets**: Access and view digital tickets with QR codes after a successful booking.
 
-## 🛠️ API Endpoints
+### Admin Dashboard
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-
-### Movies
-- `GET /api/movies` - Get all movies
-- `GET /api/movies/:id` - Get movie details
-- `POST /api/admin/movies` - Create movie (Admin)
-- `PUT /api/admin/movies/:id` - Update movie (Admin)
-- `DELETE /api/admin/movies/:id` - Delete movie (Admin)
-
-### Bookings
-- `GET /api/booking` - Get user bookings
-- `POST /api/booking` - Create booking
-- `PUT /api/booking/:id` - Update booking
-
-### Admin Routes
-- `GET /api/admin/bookings` - Get all bookings
-- `GET /api/admin/analytics` - Get sales analytics
-- `GET /api/admin/users` - Get all users
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Error**
-   - Verify SQL Server is running
-   - Check database credentials in `.env`
-   - Ensure database `Cinemium` exists
-
-2. **Port Already in Use**
-   - Change PORT in `.env` file
-   - Kill existing processes using the port
-
-3. **CORS Errors**
-   - Verify CORS_ORIGIN in backend `.env`
-   - Check frontend API_BASE_URL
-
-4. **JWT Errors**
-   - Ensure JWT_SECRET is set in backend `.env`
-   - Check token expiration
-
-### Development Commands
-
-```bash
-# Backend
-npm run dev          # Start with nodemon
-npm start           # Start production
-
-# Frontend
-npm start           # Start development server
-npm run build       # Build for production
-npm test            # Run tests
-```
-
-## 📝 License
-
-This project is licensed under the MIT License.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📞 Support
-
-For support and questions, please contact the development team. 
+  * **Sales Dashboard**: A comprehensive dashboard to monitor daily sales with statistics on tickets sold and revenue, along with charts for film distribution and sales trends.
+  * **Detailed Sales Analytics**: In-depth analysis of sales data with filtering options.
+  * **Cinema Management**: A centralized hub to manage all operational aspects of the cinema.
+  * **Movie Management**: Full CRUD (Create, Read, Update, Delete) functionality for movies.
+  * **Showtime Scheduling**: Easily create, update, and manage movie showtimes.
+  * **Studio and Seat Management**: Manage studio details and seat configurations.
+  * **Add-On Management**: Full CRUD functionality for add-on items like food and beverages.
+  * **Pricing Configuration**: Set default and custom ticket prices for different days or events.
+  * **Promotion Management**: Create and manage promotional offers for customers.
