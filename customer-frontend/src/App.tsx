@@ -40,7 +40,7 @@ function App() {
           <Route path="/movie/:id" element={<MovieDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/seat-order" element={<PrivateRoute><SeatOrder /></PrivateRoute>} />
+          <Route path="/seat-order/:showtimeId" element={<PrivateRoute><SeatOrder /></PrivateRoute>} />
           <Route path="/payment-success" element={<PrivateRoute><PaymentSuccess /></PrivateRoute>} />
         </Routes>
       </Router>

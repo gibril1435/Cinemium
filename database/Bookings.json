@@ -1,93 +1,5 @@
 [
   {
-    "bookingId": 1,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:37:44.756Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 2,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:42:20.814Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 3,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:42:47.435Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 4,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:49:05.798Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 5,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:51:03.660Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 6,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:53:11.892Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 7,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T18:53:36.202Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 8,
-    "userId": 4,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T20:03:40.157Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 9,
-    "userId": 5,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T22:09:11.363Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 10,
-    "userId": 5,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T22:50:29.609Z",
-    "status": "confirmed"
-  },
-  {
-    "bookingId": 11,
-    "userId": 5,
-    "showtimeId": "1",
-    "totalAmount": 50000,
-    "bookingDate": "2025-06-19T22:53:46.619Z",
-    "status": "confirmed"
-  },
-  {
     "bookingId": 12,
     "userId": 5,
     "showtimeId": 1,
@@ -101,6 +13,57 @@
     "showtimeId": 1,
     "totalAmount": 50000,
     "bookingDate": "2025-06-20T06:58:41.754Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 14,
+    "userId": 5,
+    "showtimeId": 1,
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-20T14:26:57.252Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 15,
+    "userId": 5,
+    "showtimeId": 1,
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-20T17:27:07.404Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 16,
+    "userId": 5,
+    "showtimeId": 3,
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-21T04:40:04.261Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 17,
+    "userId": 5,
+    "showtimeId": 3,
+    "studioName": "Studio 1",
+    "totalAmount": 50000,
+    "bookingDate": "2025-06-21T07:01:51.681Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 18,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 100000,
+    "bookingDate": "2025-06-21T08:11:01.697Z",
+    "status": "confirmed"
+  },
+  {
+    "bookingId": 19,
+    "userId": 5,
+    "showtimeId": 4,
+    "studioName": "Studio 3",
+    "totalAmount": 75000,
+    "bookingDate": "2025-06-21T08:14:40.088Z",
     "status": "confirmed"
   }
 ]

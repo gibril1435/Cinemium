@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
 // Types
@@ -15,14 +15,13 @@ interface AddOn {
   description: string;
   price: number;
   stock: number;
+  category: string;
+  imageUrl: string;
 }
 
 const SeatOrder: React.FC = () => {
-  const location = useLocation();
+  const { showtimeId } = useParams<{ showtimeId: string }>();
   const navigate = useNavigate();
-  const params = new URLSearchParams(location.search);
-  const movieId = params.get('movieId');
-  const showtimeId = params.get('showtimeId');
 
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
@@ -30,7 +29,7 @@ const SeatOrder: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [movieTitle, setMovieTitle] = useState('');
-  const [showtime, setShowtime] = useState('');
+  const [showtime, setShowtime] = useState<any>(null);
   const [addOns, setAddOns] = useState<AddOn[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<{ [id: number]: number }>({});
   const [notification, setNotification] = useState<string | null>(null);
@@ -42,24 +41,36 @@ const SeatOrder: React.FC = () => {
 
   useEffect(() => {
     if (!showtimeId) return;
-    setLoading(true);
-    Promise.all([
-      api.get(`/booking/showtimes/${showtimeId}/seats`),
-      movieId ? api.get(`/movies/${movieId}`) : Promise.resolve({ data: {} }),
-      api.get(`/booking/showtimes/${showtimeId}`),
-      api.get('/addons')
-    ]).then(([seatsRes, movieRes, showtimeRes, addOnsRes]) => {
-      setSeats(seatsRes.data.layout?.seats || []);
-      setMovieTitle(movieRes.data.title || '');
-      setShowtime(showtimeRes.data.showDateTime || showtimeRes.data.time);
-      setAddOns(addOnsRes.data.addOns || addOnsRes.data);
-      setLoading(false);
-    }).catch(err => {
-      console.error('Error loading data:', err);
-      setError('Failed to load booking information');
-      setLoading(false);
-    });
-  }, [showtimeId, movieId]);
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [showtimeRes, seatsRes, addOnsRes] = await Promise.all([
+          api.get(`/booking/showtimes/${showtimeId}`),
+          api.get(`/booking/showtimes/${showtimeId}/seats`),
+          api.get('/addons'),
+        ]);
+
+        const currentShowtime = showtimeRes.data;
+        setShowtime(currentShowtime);
+        setSeats(seatsRes.data.layout?.seats || []);
+        setAddOns(addOnsRes.data.map((a: any) => ({...a, id: a.addOnId})));
+
+        if (currentShowtime.movieId) {
+          const movieRes = await api.get(`/movies/${currentShowtime.movieId}`);
+          setMovieTitle(movieRes.data.title || '');
+        }
+
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load booking information');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [showtimeId]);
 
   const toggleSeat = (seatId: string) => {
     setSelectedSeats(seats => {
@@ -80,7 +91,7 @@ const SeatOrder: React.FC = () => {
   };
 
   const totalAddOnPrice = addOns.reduce((sum, addOn) => sum + (selectedAddOns[addOn.id] || 0) * addOn.price, 0);
-  const totalPrice = selectedSeats.length * SEAT_PRICE + totalAddOnPrice;
+  const totalPrice = selectedSeats.length * (showtime?.price || 0) + totalAddOnPrice;
 
   const handlePay = async () => {
     if (!showtimeId || selectedSeats.length === 0) {
@@ -173,7 +184,7 @@ const SeatOrder: React.FC = () => {
               {movieTitle}
             </h1>
             <p className="text-gray-400">
-              {showtime ? new Date(showtime).toLocaleString('en-US', {
+              {showtime ? new Date(showtime.showDateTime).toLocaleString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -198,13 +209,10 @@ const SeatOrder: React.FC = () => {
               <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6 mb-8">
                 <div className="flex flex-col items-center">
                   {/* Column labels */}
-                  <div className="flex mb-4 justify-center">
-                    <div className="w-8" />
+                  <div className="grid grid-cols-9 gap-x-2 mb-2 w-fit mx-auto">
+                    <div /> {/* Empty for row label space */}
                     {[...Array(COLS)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-10 h-10 flex items-center justify-center text-gray-400 text-sm"
-                      >
+                      <div key={i} className="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">
                         {i + 1}
                       </div>
                     ))}
@@ -212,8 +220,8 @@ const SeatOrder: React.FC = () => {
 
                   {/* Seat grid */}
                   {Array.from({ length: ROWS }).map((_, rowIdx) => (
-                    <div key={rowIdx} className="flex items-center mb-4">
-                      <div className="w-8 text-center font-medium text-gray-400">
+                    <div key={rowIdx} className="grid grid-cols-9 gap-x-2 w-fit mx-auto mb-2">
+                      <div className="w-10 h-10 flex items-center justify-center font-medium text-gray-400">
                         {ROW_LABELS[rowIdx]}
                       </div>
                       {Array.from({ length: COLS }).map((_, colIdx) => {
@@ -223,22 +231,21 @@ const SeatOrder: React.FC = () => {
                             key={seat.id}
                             disabled={!seat.available}
                             onClick={() => toggleSeat(seat.id)}
-                            className={`
-                              w-10 h-10 m-0.5 rounded-lg transition-all duration-200
-                              ${!seat.available ? 
-                                'bg-gray-700 cursor-not-allowed opacity-50' : 
+                            className={
+                              `w-10 h-10 rounded-lg transition-all duration-200 flex items-center justify-center ` +
+                              (!seat.available ?
+                                'bg-gray-700 cursor-not-allowed opacity-50' :
                                 selectedSeats.includes(seat.id) ?
-                                'bg-yellow-500 text-black hover:bg-yellow-400' :
-                                'bg-gray-700 hover:bg-gray-600'
-                              }
-                            `}
+                                  'bg-yellow-500 text-black hover:bg-yellow-400' :
+                                  'bg-gray-700 hover:bg-gray-600')
+                            }
                             title={seat.label}
                             aria-label={`Seat ${seat.label}${seat.available ? '' : ' (unavailable)'}`}
                           >
                             {colIdx + 1}
                           </button>
                         ) : (
-                          <div key={colIdx} className="w-10 h-10 m-0.5" />
+                          <div key={colIdx} className="w-10 h-10" />
                         );
                       })}
                     </div>
@@ -331,7 +338,7 @@ const SeatOrder: React.FC = () => {
                 <div className="space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Seats ({selectedSeats.length})</span>
-                    <span className="text-white">Rp{(selectedSeats.length * SEAT_PRICE).toLocaleString()}</span>
+                    <span className="text-white">Rp{(selectedSeats.length * (showtime?.price || 0)).toLocaleString()}</span>
                   </div>
                   {totalAddOnPrice > 0 && (
                     <div className="flex justify-between text-sm">

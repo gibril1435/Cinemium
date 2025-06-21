@@ -1,18 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { isAdmin } = require('../middleware/auth');
+const { authenticate, isAdmin } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } = require('date-fns');
 const { readTable, writeTable } = require('../utils/jsonDb');
 
 // Public: Get all add-ons
 router.get('/', (req, res) => {
-  const addons = readTable('AddOns');
+  const addons = readTable('AddOns').map(addon => ({
+    ...addon,
+    status: addon.isActive ? 'active' : 'inactive',
+  }));
   res.json(addons);
 });
 
 // Apply admin middleware to all routes below
-router.use(isAdmin);
+router.use(authenticate, isAdmin);
 
 /**
  * @swagger
@@ -58,12 +61,19 @@ router.post('/', (req, res) => {
 
 // Update an add-on
 router.put('/:id', (req, res) => {
-  const addons = readTable('AddOns');
-  const idx = addons.findIndex(a => a.addOnId == req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'AddOn not found' });
-  addons[idx] = { ...addons[idx], ...req.body };
-  writeTable('AddOns', addons);
-  res.json(addons[idx]);
+  try {
+    const addons = readTable('AddOns');
+    const idx = addons.findIndex(a => a.addOnId == req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'AddOn not found' });
+    
+    addons[idx] = { ...addons[idx], ...req.body };
+    
+    writeTable('AddOns', addons);
+    res.json(addons[idx]);
+  } catch (err) {
+    console.error('Error updating add-on:', err);
+    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  }
 });
 
 // Delete an add-on

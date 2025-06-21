@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { authFetch } from '../utils/authFetch';
+import React, { useState, useEffect } from 'react';
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { authFetch, formatRupiah } from '../utils/authFetch';
 
 type Movie = {
   id: string;
@@ -25,161 +26,322 @@ type Studio = {
 };
 
 const CinemaManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'movies' | 'showtimes' | 'studios'>('movies');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      switch (activeTab) {
-        case 'movies': {
-          const response = await authFetch('/movies');
-          if (!response.ok) throw new Error('Failed to fetch movies');
-          const data = await response.json();
-          setMovies(data.map((movie: any) => ({ ...movie, id: movie.movieId })));
-          break;
-        }
-        case 'showtimes': {
-          const response = await authFetch('/showtimes');
-          if (!response.ok) throw new Error('Failed to fetch showtimes');
-          const data = await response.json();
-          setShowtimes(data.map((showtime: any) => ({ ...showtime, id: showtime.showtimeId })));
-          break;
-        }
-        case 'studios': {
-          const response = await authFetch('/studios');
-          if (!response.ok) throw new Error('Failed to fetch studios');
-          const data = await response.json();
-          setStudios(data.map((studio: any) => ({ ...studio, id: studio.studioId })));
-          break;
-        }
-      }
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to load data');
-      setLoading(false);
-    }
-  }, [activeTab]);
+  const [activeTab, setActiveTab] = useState<'movies' | 'showtimes' | 'studios'>('movies');
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
-  if (loading) return <div className="p-4">Loading...</div>;
-  if (error) return <div className="p-4 text-[var(--error)]">{error}</div>;
+  const fetchData = async () => {
+    try {
+      setError(null);
+      const [moviesRes, showtimesRes, studiosRes] = await Promise.all([
+        authFetch('/api/movies'),
+        authFetch('/api/showtimes'),
+        authFetch('/api/admin/studios'),
+      ]);
+
+      if (!moviesRes.ok) throw new Error('Failed to fetch movies');
+      if (!showtimesRes.ok) throw new Error('Failed to fetch showtimes');
+      if (!studiosRes.ok) throw new Error('Failed to fetch studios');
+
+      const moviesData = await moviesRes.json();
+      const showtimesData = await showtimesRes.json();
+      const studiosData = await studiosRes.json();
+
+      setMovies(moviesData);
+      setShowtimes(showtimesData);
+      setStudios(studiosData);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Failed to load cinema data. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500 text-lg">Loading cinema management...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-600 text-lg">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Cinema Management</h1>
-
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6">
-        <button
-          className={`px-4 py-2 rounded ${activeTab === 'movies' ? 'bg-[var(--primary)] text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('movies')}
-        >
-          Movies
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${activeTab === 'showtimes' ? 'bg-[var(--primary)] text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('showtimes')}
-        >
-          Showtimes
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${activeTab === 'studios' ? 'bg-[var(--primary)] text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('studios')}
-        >
-          Studios
-        </button>
+    <div>
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h1 className="text-2xl font-semibold text-gray-900">Cinema Management</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            Manage movies, showtimes, and studio information in one place.
+          </p>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {activeTab === 'movies' && (
-          <div className="p-4">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-xl font-bold">Movies</h2>
-              <button className="btn btn-primary">Add Movie</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {movies.map(movie => (
-                <div key={movie.id} className="border rounded-lg p-4">
-                  {movie.posterUrl && (
-                    <img src={movie.posterUrl} alt={movie.title} className="w-full h-48 object-cover rounded mb-4" />
-                  )}
-                  <h3 className="font-bold">{movie.title}</h3>
-                  <p className="text-sm text-gray-600">{movie.genre}</p>
-                  <p className="text-sm mt-2">{movie.synopsis}</p>
-                  <div className="mt-4 flex gap-2">
-                    <button className="btn btn-secondary">Edit</button>
-                    <button className="btn btn-danger">Delete</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Tab Navigation */}
+      <div className="mt-8 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('movies')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'movies'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Movies ({movies.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('showtimes')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'showtimes'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Showtimes ({showtimes.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('studios')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'studios'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Studios ({studios.length})
+          </button>
+        </nav>
+      </div>
 
-        {activeTab === 'showtimes' && (
-          <div className="p-4">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-xl font-bold">Showtimes</h2>
-              <button className="btn btn-primary">Add Showtime</button>
-            </div>
-            <table className="w-full">
-              <thead className="bg-gray-50">
+      {/* Movies Tab */}
+      {activeTab === 'movies' && (
+        <div className="mt-8">
+          <div className="table-container">
+            <table className="table">
+              <thead className="table-header">
                 <tr>
-                  <th className="px-4 py-2 text-left">Movie</th>
-                  <th className="px-4 py-2 text-left">Studio</th>
-                  <th className="px-4 py-2 text-left">Time</th>
-                  <th className="px-4 py-2 text-right">Price</th>
-                  <th className="px-4 py-2 text-center">Actions</th>
+                  <th className="table-header-cell">Title</th>
+                  <th className="table-header-cell">Genre</th>
+                  <th className="table-header-cell">Status</th>
+                  <th className="table-header-cell">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {showtimes.map(st => (
-                  <tr key={st.id} className="border-t">
-                    <td className="px-4 py-2">{movies.find(m => m.id === st.movieId)?.title}</td>
-                    <td className="px-4 py-2">{studios.find(s => s.id === st.studioId)?.name}</td>
-                    <td className="px-4 py-2">{new Date(st.time).toLocaleString()}</td>
-                    <td className="px-4 py-2 text-right">Rp{st.price}</td>
-                    <td className="px-4 py-2 text-center">
-                      <button className="btn btn-secondary mr-2">Edit</button>
-                      <button className="btn btn-danger">Delete</button>
+              <tbody className="table-body">
+                {movies.length === 0 ? (
+                  <tr className="table-row">
+                    <td className="table-cell" colSpan={4}>
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="text-lg font-medium">No movies found</div>
+                        <div className="text-sm">Add movies to get started.</div>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  movies.map((movie) => (
+                    <tr key={movie.id} className="table-row">
+                      <td className="table-cell">
+                        <div className="flex items-center">
+                          {movie.posterUrl && (
+                            <img
+                              src={movie.posterUrl}
+                              alt={movie.title}
+                              className="h-10 w-10 rounded object-cover mr-3"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium text-gray-900">{movie.title}</div>
+                            <div className="text-sm text-gray-500">{movie.genre}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="table-cell">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {movie.genre}
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <div className="flex space-x-3">
+                          <button
+                            className="text-primary-600 hover:text-primary-900 transition-colors"
+                            title="Edit movie"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete movie"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === 'studios' && (
-          <div className="p-4">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-xl font-bold">Studios</h2>
-              <button className="btn btn-primary">Add Studio</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {studios.map(studio => (
-                <div key={studio.id} className="border rounded-lg p-4">
-                  <h3 className="font-bold">{studio.name}</h3>
-                  <p className="text-sm text-gray-600">Capacity: {studio.capacity} seats</p>
-                  <div className="mt-4 flex gap-2">
-                    <button className="btn btn-secondary">Edit</button>
-                    <button className="btn btn-danger">Delete</button>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Showtimes Tab */}
+      {activeTab === 'showtimes' && (
+        <div className="mt-8">
+          <div className="table-container">
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th className="table-header-cell">Movie</th>
+                  <th className="table-header-cell">Studio</th>
+                  <th className="table-header-cell">Time</th>
+                  <th className="table-header-cell">Price</th>
+                  <th className="table-header-cell">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="table-body">
+                {showtimes.length === 0 ? (
+                  <tr className="table-row">
+                    <td className="table-cell" colSpan={5}>
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="text-lg font-medium">No showtimes found</div>
+                        <div className="text-sm">Add showtimes to get started.</div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  showtimes.map((showtime) => (
+                    <tr key={showtime.id} className="table-row">
+                      <td className="table-cell font-medium text-gray-900">
+                        {movies.find(m => m.id === showtime.movieId)?.title || 'Unknown Movie'}
+                      </td>
+                      <td className="table-cell">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          Studio {studios.find(s => s.id === showtime.studioId)?.name || 'Unknown'}
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <div className="text-sm text-gray-900">
+                          {new Date(showtime.time).toLocaleDateString()}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(showtime.time).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                      </td>
+                      <td className="table-cell font-medium text-gray-900">
+                        {formatRupiah(showtime.price)}
+                      </td>
+                      <td className="table-cell">
+                        <div className="flex space-x-3">
+                          <button
+                            className="text-primary-600 hover:text-primary-900 transition-colors"
+                            title="Edit showtime"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete showtime"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Studios Tab */}
+      {activeTab === 'studios' && (
+        <div className="mt-8">
+          <div className="table-container">
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th className="table-header-cell">Name</th>
+                  <th className="table-header-cell">Capacity</th>
+                  <th className="table-header-cell">Status</th>
+                  <th className="table-header-cell">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="table-body">
+                {studios.length === 0 ? (
+                  <tr className="table-row">
+                    <td className="table-cell" colSpan={4}>
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="text-lg font-medium">No studios found</div>
+                        <div className="text-sm">Add studios to get started.</div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  studios.map((studio) => (
+                    <tr key={studio.id} className="table-row">
+                      <td className="table-cell font-medium text-gray-900">{studio.name}</td>
+                      <td className="table-cell">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {studio.capacity} seats
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <div className="flex space-x-3">
+                          <button
+                            className="text-primary-600 hover:text-primary-900 transition-colors"
+                            title="Edit studio"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete studio"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

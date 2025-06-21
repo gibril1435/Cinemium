@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
 type Movie = {
@@ -15,27 +15,57 @@ type Movie = {
   isActive?: boolean;
 };
 
+type Showtime = {
+  showtimeId: number;
+  showDateTime: string;
+  price: number;
+  studio: {
+    studioNumber: number;
+  };
+};
+
 const MovieDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!id) return;
-    
-    api.get(`/movies/${id}`)
-      .then(res => {
-        console.log('Movie detail response:', res.data);
-        setMovie(res.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching movie:', err);
+    const fetchMovieAndShowtimes = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      try {
+        const moviePromise = api.get(`/movies/${id}`);
+        const showtimesPromise = api.get(`/showtimes?movieId=${id}`);
+
+        const [movieRes, showtimesRes] = await Promise.all([
+          moviePromise,
+          showtimesPromise,
+        ]);
+        
+        console.log('Movie detail response:', movieRes.data);
+        setMovie(movieRes.data);
+        
+        console.log('Showtimes response:', showtimesRes.data);
+        setShowtimes(showtimesRes.data);
+
+      } catch (err) {
+        console.error('Error fetching movie details:', err);
         setError('Failed to load movie details');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchMovieAndShowtimes();
   }, [id]);
+
+  const availableShowtimes = showtimes
+    .filter((showtime) => new Date(showtime.showDateTime) > new Date())
+    .sort((a, b) => new Date(a.showDateTime).getTime() - new Date(b.showDateTime).getTime());
 
   if (loading) {
     return (
@@ -167,38 +197,29 @@ const MovieDetail: React.FC = () => {
                 <div className="w-full md:w-72">
                   <h2 className="text-xl font-semibold mb-4 text-white">Available Shows</h2>
                   <div className="space-y-3">
-                    <Link
-                      to={`/seat-order?movieId=${movie.movieId}&showtimeId=1`}
-                      className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                      <div>
-                        <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">13:00</div>
-                        <div className="text-sm text-gray-400">Studio 1</div>
+                    {availableShowtimes.length > 0 ? (
+                      availableShowtimes.map((showtime) => (
+                        <button
+                          key={showtime.showtimeId}
+                          onClick={() => navigate(`/seat-order/${showtime.showtimeId}`)}
+                          className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group text-left"
+                        >
+                          <div>
+                            <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">
+                              {new Date(showtime.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              Studio {showtime.studio?.studioNumber || 'N/A'}
+                            </div>
+                          </div>
+                          <div className="text-sm text-yellow-500">Book Now</div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-gray-400 text-center py-4">
+                        No available shows for this movie.
                       </div>
-                      <div className="text-sm text-yellow-500">Book Now</div>
-                    </Link>
-                    
-                    <Link
-                      to={`/seat-order?movieId=${movie.movieId}&showtimeId=2`}
-                      className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                      <div>
-                        <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">16:00</div>
-                        <div className="text-sm text-gray-400">Studio 1</div>
-                      </div>
-                      <div className="text-sm text-yellow-500">Book Now</div>
-                    </Link>
-                    
-                    <Link
-                      to={`/seat-order?movieId=${movie.movieId}&showtimeId=3`}
-                      className="flex items-center justify-between w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                      <div>
-                        <div className="text-white font-medium group-hover:text-yellow-500 transition-colors">19:00</div>
-                        <div className="text-sm text-gray-400">Studio 1</div>
-                      </div>
-                      <div className="text-sm text-yellow-500">Book Now</div>
-                    </Link>
+                    )}
                   </div>
                 </div>
               </div>

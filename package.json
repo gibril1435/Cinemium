@@ -37,6 +37,7 @@
     "tedious": "^16.6.0"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.5",
     "nodemon": "^2.0.22"
   },
   "engines": {

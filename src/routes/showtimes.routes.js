@@ -4,8 +4,37 @@ const { readTable, writeTable } = require('../utils/jsonDb');
 
 // Get all showtimes
 router.get('/', (req, res) => {
-  const showtimes = readTable('Showtimes');
-  res.json(showtimes);
+  let showtimes = readTable('Showtimes');
+  const { movieId } = req.query;
+
+  if (movieId) {
+    showtimes = showtimes.filter(st => st.movieId == movieId);
+  }
+
+  const movies = readTable('Movies');
+  const studios = readTable('Studios');
+
+  const enhancedShowtimes = showtimes.map(st => {
+    const movie = movies.find(m => m.movieId === st.movieId);
+    const studio = studios.find(s => s.studioId === st.studioId);
+
+    const now = new Date();
+    const showDateTime = new Date(st.showDateTime);
+    let status = 'scheduled';
+    if (st.isActive === false) {
+      status = 'cancelled';
+    } else if (showDateTime < now) {
+      status = 'completed';
+    }
+
+    return {
+      ...st,
+      movie: movie ? { title: movie.title, posterUrl: movie.posterUrl } : null,
+      studio: studio ? { studioNumber: studio.studioNumber } : null,
+      status,
+    };
+  });
+  res.json(enhancedShowtimes);
 });
 
 // Get a showtime by ID

@@ -8,9 +8,12 @@
     "actors": "John Smith, Alice Brown",
     "productionHouse": "Epic Studios",
     "duration": 120,
-    "posterUrl": "https://example.com/poster1.jpg",
+    "posterUrl": "https://image.tmdb.org/t/p/w500/aQrf3yjFTmgSJ485bKxx4AtAA4J.jpg",
     "isActive": true,
-    "createdAt": null
+    "createdAt": null,
+    "description": "lol\n",
+    "releaseDate": "2025-06-13",
+    "cast": "Bryant"
   },
   {
     "movieId": 2,
@@ -21,8 +24,26 @@
     "actors": "Dave Bowman, HAL 9000",
     "productionHouse": "Space Films",
     "duration": 140,
-    "posterUrl": "https://example.com/poster2.jpg",
+    "posterUrl": "https://th.bing.com/th/id/OIP.83PM7e78cIEKq5gvw7hGpQHaLH?rs=1&pid=ImgDetMain&cb=idpwebp2&o=7&rm=3",
     "isActive": true,
-    "createdAt": null
+    "createdAt": null,
+    "description": "lol",
+    "releaseDate": "2025-06-20",
+    "cast": "Bryan"
+  },
+  {
+    "title": "The Godfather",
+    "description": "aklsdi",
+    "duration": "135",
+    "releaseDate": "2005-01-04",
+    "genre": "Action",
+    "director": "Wira",
+    "cast": "askfkan",
+    "posterUrl": "https://image.tmdb.org/t/p/original/gXiniOb2EpD7VkqprlzOzKoTEwK.jpg",
+    "movieId": 6,
+    "synopsis": "aklsdi",
+    "actors": "askfkan",
+    "productionHouse": "Disney",
+    "isActive": true
   }
-] 
+]

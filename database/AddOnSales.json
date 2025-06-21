@@ -1,1 +1,27 @@
-[] 
+[
+  {
+    "addOnSaleId": 1,
+    "bookingId": 18,
+    "addOnId": 1,
+    "quantity": 2,
+    "unitPrice": 25000,
+    "AddOnSaleID": 1,
+    "BookingID": 18,
+    "Quantity": 2,
+    "UnitPrice": 25000,
+    "TotalPrice": 50000
+  },
+  {
+    "addOnSaleId": 2,
+    "bookingId": 19,
+    "addOnId": 1,
+    "quantity": 1,
+    "unitPrice": 25000,
+    "TotalPrice": 25000,
+    "AddOnSaleID": 2,
+    "BookingID": 19,
+    "AddOnID": 1,
+    "Quantity": 1,
+    "UnitPrice": 25000
+  }
+]

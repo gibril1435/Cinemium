@@ -166,18 +166,23 @@ router.post('/transactions', authenticate, async (req, res) => {
       });
     }
     
-    // Calculate total amount
+    // Calculate total amount and manage add-on stock
     let totalAmount = seats.length * showtime.price;
     const addOnItems = [];
+    const allAddOns = readTable('AddOns');
     
     if (addOns && addOns.length > 0) {
-      const allAddOns = readTable('AddOns');
-      
       for (const addOn of addOns) {
-        const addOnItem = allAddOns.find(item => item.addOnId == addOn.id);
-        if (addOnItem) {
-          totalAmount += addOnItem.price * addOn.quantity;
-          addOnItems.push({ ...addOnItem, quantity: addOn.quantity });
+        const addOnInDb = allAddOns.find(item => item.addOnId == addOn.id);
+        if (addOnInDb) {
+          if (addOnInDb.stock < addOn.quantity) {
+            return res.status(400).json({
+              error: 'Insufficient Stock',
+              message: `Not enough stock for ${addOnInDb.name}. Only ${addOnInDb.stock} left.`
+            });
+          }
+          totalAmount += addOnInDb.price * addOn.quantity;
+          addOnItems.push({ ...addOnInDb, quantity: addOn.quantity });
         }
       }
     }
@@ -194,7 +199,7 @@ router.post('/transactions', authenticate, async (req, res) => {
       bookingId: newBookingId,
       userId: userId,
       showtimeId: numericShowtimeId,
-      studioName: studio ? studio.name : 'N/A',
+      studioName: studio ? `Studio ${studio.studioNumber}` : 'N/A',
       totalAmount: totalAmount,
       bookingDate: new Date().toISOString(),
       status: 'confirmed'
@@ -204,41 +209,51 @@ router.post('/transactions', authenticate, async (req, res) => {
     writeTable('Bookings', bookings);
     
     // Create booking seats
-    const newBookingSeats = seats.map(seatNumber => {
-      const newBookingSeatId = bookingSeats.length ? Math.max(...bookingSeats.map(bs => bs.bookingSeatId)) + 1 : 1;
-      return {
-        bookingSeatId: newBookingSeatId,
+    let nextBookingSeatId = bookingSeats.length ? Math.max(...bookingSeats.map(bs => bs.bookingSeatId || 0)) + 1 : 1;
+    const newBookingSeatsData = seats.map(seatNumber => ({
+        bookingSeatId: nextBookingSeatId++,
         bookingId: newBookingId,
         showtimeId: numericShowtimeId,
         seatNumber: seatNumber
-      };
-    });
+    }));
     
-    bookingSeats.push(...newBookingSeats);
+    bookingSeats.push(...newBookingSeatsData);
     writeTable('BookingSeats', bookingSeats);
     
-    // Create add-on sales if any
+    // Create add-on sales and update stock if any
     if (addOnItems.length > 0) {
+      // Decrement stock from the in-memory array
+      for (const item of addOnItems) {
+        const addOnInDb = allAddOns.find(a => a.addOnId === item.addOnId);
+        if (addOnInDb) {
+          addOnInDb.stock -= item.quantity;
+        }
+      }
+      
       const addOnSales = readTable('AddOnSales');
+      let nextAddOnSaleId = addOnSales.length ? Math.max(...addOnSales.map(aos => aos.addOnSaleId || 0)) + 1 : 1;
       const newAddOnSales = addOnItems.map(addOn => {
-        const newAddOnSaleId = addOnSales.length ? Math.max(...addOnSales.map(aos => aos.addOnSaleId)) + 1 : 1;
-        return {
-          addOnSaleId: newAddOnSaleId,
+        const sale = {
+          addOnSaleId: nextAddOnSaleId,
           bookingId: newBookingId,
           addOnId: addOn.addOnId,
           quantity: addOn.quantity,
           unitPrice: addOn.price,
-          AddOnSaleID: newAddOnSaleId,
-          BookingID: newBookingId,
-          AddOnID: addOn.AddOnID,
-          Quantity: addOn.quantity,
-          UnitPrice: addOn.price,
           TotalPrice: addOn.price * addOn.quantity
         };
+        // For compatibility with existing data that might have PascalCase
+        sale.AddOnSaleID = sale.addOnSaleId;
+        sale.BookingID = sale.bookingId;
+        sale.AddOnID = sale.addOnId;
+        sale.Quantity = sale.quantity;
+        sale.UnitPrice = sale.unitPrice;
+        nextAddOnSaleId++;
+        return sale;
       });
       
       addOnSales.push(...newAddOnSales);
       writeTable('AddOnSales', addOnSales);
+      writeTable('AddOns', allAddOns); // Write updated stock
     }
     
     // Generate QR codes for tickets
@@ -353,6 +368,7 @@ router.get('/history', authenticate, (req, res) => {
           id: booking.bookingId,
           date: booking.bookingDate,
           movieTitle: movie ? movie.title : '',
+          posterUrl: movie ? movie.posterUrl : '',
           showtime: showtime ? showtime.showDateTime : '',
           seat: seats.join(', '),
           amount: booking.totalAmount,
@@ -403,6 +419,7 @@ router.get('/:bookingId', authenticate, (req, res) => {
     
     const showtime = showtimes.find(s => s.showtimeId == booking.showtimeId);
     const movie = movies.find(m => m.movieId == showtime?.movieId);
+    const studio = readTable('Studios').find(s => s.studioId == showtime?.studioId);
     const seats = bookingSeats
       .filter(bs => bs.bookingId == booking.bookingId)
       .map(bs => bs.seatNumber);
@@ -422,7 +439,8 @@ router.get('/:bookingId', authenticate, (req, res) => {
       ...booking,
       showtime: showtime ? {
         showDateTime: showtime.showDateTime,
-        price: showtime.price
+        price: showtime.price,
+        studioName: studio ? `Studio ${studio.studioNumber}` : 'N/A'
       } : null,
       movie: movie ? {
         title: movie.title,
@@ -559,7 +577,7 @@ router.get('/:bookingId/ticket', authenticate, async (req, res) => {
       movieTitle: movie ? movie.title : 'Unknown Movie',
       showTime: showtime ? showtime.showDateTime : 'Unknown Time',
       seats: seats.join(', '),
-      studioName: booking.studioName || 'N/A',
+      studioName: studio ? `Studio ${studio.studioNumber}` : 'N/A',
       totalAmount: booking.totalAmount,
       qrCode
     };

@@ -10,5 +10,17 @@
     "studioNumber": 2,
     "capacity": 40,
     "isActive": true
+  },
+  {
+    "studioId": 3,
+    "studioNumber": 3,
+    "capacity": 40,
+    "isActive": true
+  },
+  {
+    "studioId": 4,
+    "studioNumber": 4,
+    "capacity": 40,
+    "isActive": true
   }
 ] 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { isAdmin } = require('../middleware/auth');
+const { isAdmin, authenticate } = require('../middleware/auth');
 const { readTable, writeTable } = require('../utils/jsonDb');
 
 /**
@@ -145,47 +145,6 @@ const { readTable, writeTable } = require('../utils/jsonDb');
  *           type: integer
  *         isActive:
  *           type: boolean
- *     Notification:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         userId:
- *           type: integer
- *         type:
- *           type: string
- *         title:
- *           type: string
- *         message:
- *           type: string
- *         data:
- *           type: object
- *         read:
- *           type: boolean
- *         createdAt:
- *           type: string
- *           format: date-time
- *     TicketPrice:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         type:
- *           type: string
- *         price:
- *           type: number
- *         startDate:
- *           type: string
- *           format: date-time
- *         endDate:
- *           type: string
- *           format: date-time
- *         dayOfWeek:
- *           type: integer
- *         isHoliday:
- *           type: boolean
- *         description:
- *           type: string
  *
  * @swagger
  * /api/movies:
@@ -206,33 +165,42 @@ const { readTable, writeTable } = require('../utils/jsonDb');
 // Public routes (no authentication required)
 // Get all movies
 router.get('/', (req, res) => {
-  const movies = readTable('Movies');
+  const movies = readTable('Movies').map(m => ({
+    ...m,
+    synopsis: m.synopsis || m.description,
+    actors: m.actors || m.cast,
+  }));
   res.json(movies);
 });
 
 // Get a movie by ID
 router.get('/:id', (req, res) => {
   const movies = readTable('Movies');
-  const movie = movies.find(m => m.movieId == req.params.id);
+  let movie = movies.find(m => m.movieId == req.params.id);
   if (!movie) return res.status(404).json({ error: 'Movie not found' });
+  movie = {
+    ...movie,
+    synopsis: movie.synopsis || movie.description,
+    actors: movie.actors || movie.cast,
+  };
   res.json(movie);
 });
 
 // Admin routes (authentication required)
 // Create a new movie
-router.post('/', isAdmin, (req, res) => {
+router.post('/', authenticate, isAdmin, (req, res) => {
   const movies = readTable('Movies');
-  const newId = movies.length ? Math.max(...movies.map(m => m.MovieID)) + 1 : 1;
-  const newMovie = { ...req.body, MovieID: newId };
+  const newId = movies.length ? Math.max(...movies.map(m => m.movieId || m.MovieID || 0)) + 1 : 1;
+  const newMovie = { ...req.body, movieId: newId };
   movies.push(newMovie);
   writeTable('Movies', movies);
   res.status(201).json(newMovie);
 });
 
 // Update a movie
-router.put('/:id', isAdmin, (req, res) => {
+router.put('/:id', authenticate, isAdmin, (req, res) => {
   const movies = readTable('Movies');
-  const idx = movies.findIndex(m => m.MovieID == req.params.id);
+  const idx = movies.findIndex(m => m.movieId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
   movies[idx] = { ...movies[idx], ...req.body };
   writeTable('Movies', movies);
@@ -240,9 +208,9 @@ router.put('/:id', isAdmin, (req, res) => {
 });
 
 // Delete a movie
-router.delete('/:id', isAdmin, (req, res) => {
+router.delete('/:id', authenticate, isAdmin, (req, res) => {
   let movies = readTable('Movies');
-  const idx = movies.findIndex(m => m.MovieID == req.params.id);
+  const idx = movies.findIndex(m => m.movieId == req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
   const deleted = movies.splice(idx, 1)[0];
   writeTable('Movies', movies);

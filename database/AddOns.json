@@ -4,7 +4,9 @@
     "name": "Popcorn",
     "description": "Large popcorn",
     "price": 25000,
-    "stock": 100,
-    "isActive": true
+    "stock": 99,
+    "isActive": true,
+    "category": "Foods",
+    "imageUrl": "https://images-na.ssl-images-amazon.com/images/I/81WacyKUTcL._AC_SL1500_.jpg"
   }
-] 
+]

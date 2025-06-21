@@ -1,71 +1,5 @@
 [
   {
-    "bookingSeatId": 1,
-    "bookingId": 1,
-    "showtimeId": "1",
-    "seatNumber": "A2"
-  },
-  {
-    "bookingSeatId": 2,
-    "bookingId": 2,
-    "showtimeId": "1",
-    "seatNumber": "A3"
-  },
-  {
-    "bookingSeatId": 3,
-    "bookingId": 3,
-    "showtimeId": "1",
-    "seatNumber": "A4"
-  },
-  {
-    "bookingSeatId": 4,
-    "bookingId": 4,
-    "showtimeId": "1",
-    "seatNumber": "A1"
-  },
-  {
-    "bookingSeatId": 5,
-    "bookingId": 5,
-    "showtimeId": "1",
-    "seatNumber": "A5"
-  },
-  {
-    "bookingSeatId": 6,
-    "bookingId": 6,
-    "showtimeId": "1",
-    "seatNumber": "A6"
-  },
-  {
-    "bookingSeatId": 7,
-    "bookingId": 7,
-    "showtimeId": "1",
-    "seatNumber": "A7"
-  },
-  {
-    "bookingSeatId": 8,
-    "bookingId": 8,
-    "showtimeId": "1",
-    "seatNumber": "A8"
-  },
-  {
-    "bookingSeatId": 9,
-    "bookingId": 9,
-    "showtimeId": "1",
-    "seatNumber": "B1"
-  },
-  {
-    "bookingSeatId": 10,
-    "bookingId": 10,
-    "showtimeId": "1",
-    "seatNumber": "B8"
-  },
-  {
-    "bookingSeatId": 11,
-    "bookingId": 11,
-    "showtimeId": "1",
-    "seatNumber": "B4"
-  },
-  {
     "bookingSeatId": 12,
     "bookingId": 12,
     "showtimeId": 1,
@@ -82,5 +16,41 @@
     "bookingId": 13,
     "showtimeId": 1,
     "seatNumber": "B3"
+  },
+  {
+    "bookingSeatId": 15,
+    "bookingId": 14,
+    "showtimeId": 1,
+    "seatNumber": "B7"
+  },
+  {
+    "bookingSeatId": 16,
+    "bookingId": 15,
+    "showtimeId": 1,
+    "seatNumber": "B2"
+  },
+  {
+    "bookingSeatId": 17,
+    "bookingId": 16,
+    "showtimeId": 3,
+    "seatNumber": "A4"
+  },
+  {
+    "bookingSeatId": 18,
+    "bookingId": 17,
+    "showtimeId": 3,
+    "seatNumber": "C5"
+  },
+  {
+    "bookingSeatId": 19,
+    "bookingId": 18,
+    "showtimeId": 4,
+    "seatNumber": "C5"
+  },
+  {
+    "bookingSeatId": 20,
+    "bookingId": 19,
+    "showtimeId": 4,
+    "seatNumber": "C6"
   }
 ]

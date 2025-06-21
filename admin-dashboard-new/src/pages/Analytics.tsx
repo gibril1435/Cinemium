@@ -5,7 +5,7 @@ import {
   TicketIcon,
   ShoppingCartIcon,
 } from '@heroicons/react/24/outline';
-import { authFetch } from '../utils/authFetch';
+import { authFetch, formatRupiah } from '../utils/authFetch';
 
 interface AnalyticsData {
   totalRevenue: number;
@@ -21,6 +21,7 @@ interface AnalyticsData {
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('week');
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
+      setError(null);
       const response = await authFetch('/api/admin/dashboard');
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
@@ -46,25 +48,35 @@ export default function Analytics() {
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching analytics:', error);
+      setError('Failed to load analytics data. Please try again.');
       setIsLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US').format(num);
   };
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading analytics...</div>
+        <div className="text-gray-500 text-lg">Loading analytics...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-600 text-lg">{error}</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500 text-lg">No analytics data available</div>
       </div>
     );
   }
@@ -104,7 +116,7 @@ export default function Analytics() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
                   <dd className="text-lg font-semibold text-gray-900">
-                    {formatCurrency(data.totalRevenue)}
+                    {formatRupiah(data.totalRevenue)}
                   </dd>
                 </dl>
               </div>
@@ -181,13 +193,24 @@ export default function Analytics() {
                 </tr>
               </thead>
               <tbody className="table-body">
-                {data.topMovies.map((movie, index) => (
-                  <tr key={index} className="table-row">
-                    <td className="table-cell font-medium text-gray-900">{movie.title}</td>
-                    <td className="table-cell">{formatNumber(movie.tickets)}</td>
-                    <td className="table-cell">{formatCurrency(movie.revenue)}</td>
+                {data.topMovies.length === 0 ? (
+                  <tr className="table-row">
+                    <td className="table-cell" colSpan={3}>
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="text-lg font-medium">No movie data available</div>
+                        <div className="text-sm">Movie analytics will appear here when bookings are made.</div>
+                      </div>
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  data.topMovies.map((movie, index) => (
+                    <tr key={index} className="table-row">
+                      <td className="table-cell font-medium text-gray-900">{movie.title}</td>
+                      <td className="table-cell">{formatNumber(movie.tickets)}</td>
+                      <td className="table-cell font-medium text-gray-900">{formatRupiah(movie.revenue)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -208,42 +231,54 @@ export default function Analytics() {
                 </tr>
               </thead>
               <tbody className="table-body">
-                {data.topAddons.map((addon, index) => (
-                  <tr key={index} className="table-row">
-                    <td className="table-cell font-medium text-gray-900">{addon.name}</td>
-                    <td className="table-cell">{formatNumber(addon.quantity)}</td>
-                    <td className="table-cell">{formatCurrency(addon.revenue)}</td>
+                {data.topAddons.length === 0 ? (
+                  <tr className="table-row">
+                    <td className="table-cell" colSpan={3}>
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="text-lg font-medium">No add-on data available</div>
+                        <div className="text-sm">Add-on analytics will appear here when sales are made.</div>
+                      </div>
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  data.topAddons.map((addon, index) => (
+                    <tr key={index} className="table-row">
+                      <td className="table-cell font-medium text-gray-900">{addon.name}</td>
+                      <td className="table-cell">{formatNumber(addon.quantity)}</td>
+                      <td className="table-cell font-medium text-gray-900">{formatRupiah(addon.revenue)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* Hourly Distribution */}
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900">Hourly Distribution</h2>
-        <div className="mt-4 bg-white shadow rounded-lg p-6">
-          <div className="h-64">
-            <div className="flex h-full items-end space-x-2">
-              {data.hourlyDistribution.map((hour, index) => (
-                <div key={index} className="flex-1">
-                  <div
-                    className="bg-primary-600 rounded-t"
-                    style={{
-                      height: `${(hour.tickets / Math.max(...data.hourlyDistribution.map((h) => h.tickets))) * 100}%`,
-                    }}
-                  />
-                  <div className="text-xs text-center text-gray-500 mt-1">
-                    {hour.hour}:00
-                  </div>
+      {/* Revenue Trend */}
+      {data.revenueByDay.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-medium text-gray-900">Revenue Trend</h2>
+          <div className="mt-4 bg-white shadow rounded-lg p-6">
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-lg font-medium text-gray-900">Revenue Trend Chart</div>
+                <div className="text-sm text-gray-500 mt-2">
+                  {data.revenueByDay.length} days of data available
                 </div>
-              ))}
+                <div className="mt-4 space-y-2">
+                  {data.revenueByDay.slice(-5).map((day, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{new Date(day.date).toLocaleDateString()}</span>
+                      <span className="font-medium">{formatRupiah(day.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 } 

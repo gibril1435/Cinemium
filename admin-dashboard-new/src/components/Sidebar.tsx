@@ -1,18 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
   ChartBarIcon,
   FilmIcon,
   CalendarIcon,
-  BuildingLibraryIcon,
   TicketIcon,
   ShoppingCartIcon,
-  CurrencyDollarIcon,
-  BellIcon,
-  UserGroupIcon,
   ArrowLeftOnRectangleIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/outline';
+import { authFetch } from '../utils/authFetch';
 
 const isAuthenticated = () => !!localStorage.getItem('token');
 
@@ -21,49 +19,104 @@ const navigation = [
   { name: 'Sales', href: '/sales', icon: ChartBarIcon },
   { name: 'Movies', href: '/movies', icon: FilmIcon },
   { name: 'Showtimes', href: '/showtimes', icon: CalendarIcon },
-  { name: 'Studios', href: '/studios', icon: BuildingLibraryIcon },
   { name: 'Bookings', href: '/bookings', icon: TicketIcon },
   { name: 'Add-ons', href: '/addons', icon: ShoppingCartIcon },
-  { name: 'Pricing', href: '/pricing', icon: CurrencyDollarIcon },
-  { name: 'Notifications', href: '/notifications', icon: BellIcon },
 ];
+
+interface User {
+  username: string;
+  email: string;
+}
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  if (!isAuthenticated()) return null;
+  const [user, setUser] = useState<User | null>(null);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await authFetch('/api/auth/me');
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          throw new Error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        handleLogout();
+      }
+    };
+
+    if (isAuthenticated()) {
+      fetchUser();
+    }
+  }, []);
+
+  if (!isAuthenticated()) return null;
+
   return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0">
-      <div className="p-6 flex items-center border-b border-gray-100">
-        <span className="text-2xl font-bold text-primary-700 tracking-tight">Cinemium Admin</span>
+    <aside className="w-64 h-screen bg-gray-900 text-gray-200 flex flex-col sticky top-0 shadow-xl">
+      <div className="flex items-center justify-center h-20 border-b border-gray-800">
+        <Link to="/dashboard" className="text-3xl font-bold tracking-wider text-white hover:text-primary-400 transition-colors">
+          <span className="text-primary-500">C</span>INEMIUM
+        </Link>
       </div>
+
       <nav className="flex-1 px-4 py-6 space-y-2">
+        <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
         {navigation.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || (location.pathname === '/' && item.href === '/dashboard');
           return (
             <Link
               key={item.name}
               to={item.href}
-              className={`flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors duration-150 text-base group
-                ${isActive ? 'bg-primary-100 text-primary-700 shadow' : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'}`}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium transition-colors duration-200 group text-sm
+                ${
+                  isActive
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                }`}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-500'}`} />
+              <item.icon className="h-5 w-5" />
               <span>{item.name}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="p-4 mt-auto">
+
+      <div className="p-4 border-t border-gray-800">
+        <div className="flex items-center gap-3 mb-4">
+          {user ? (
+            <>
+              <UserCircleIcon className="h-10 w-10 text-gray-500" />
+              <div className="overflow-hidden">
+                <p className="font-semibold text-sm text-white truncate">{user.username}</p>
+                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3 animate-pulse">
+              <div className="h-10 w-10 bg-gray-700 rounded-full"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-gray-700 rounded w-24"></div>
+                <div className="h-2 bg-gray-700 rounded w-32"></div>
+              </div>
+            </div>
+          )}
+        </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors duration-150 shadow"
+          className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-gray-800 hover:bg-red-700 text-gray-300 hover:text-white font-semibold transition-colors duration-150"
         >
           <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-          Logout
+          <span>Logout</span>
         </button>
       </div>
     </aside>

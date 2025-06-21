@@ -21,9 +21,11 @@ function authenticate(req, res, next) {
 
 // Middleware to check if user is admin
 function isAdmin(req, res, next) {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    console.log('isAdmin middleware: req.user =', req.user);
     const users = readTable('Users');
     const user = users.find(u => u.userId === req.user.userId);
+    console.log('isAdmin middleware: matched user =', user);
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     if (!user || user.role !== 'admin') {
         return res.status(403).json({ error: 'Forbidden: Admins only' });
     }

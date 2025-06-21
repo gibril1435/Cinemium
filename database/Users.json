@@ -3,7 +3,7 @@
     "userId": 1,
     "username": "admin",
     "email": "admin@example.com",
-    "password": "$2b$10$wH8Qw6QnQw6QnQw6QnQnQeQw6QnQw6QnQw6QnQw6QnQw6QnQw6Qn",
+    "password": "$2y$10$Q2cGnD1y4yqYqS7jwRnEkukNcxE5Ek0Lz6Ud1wYAgxkDvQac.tuQS",
     "role": "admin",
     "createdAt": "2025-06-19T00:00:00.000Z"
   },

@@ -14,15 +14,13 @@ const bookingRoutes = require('./routes/booking.routes');
 const adminRoutes = require('./routes/admin.routes');
 const addonsRoutes = require('./routes/addons.routes');
 const studiosRoutes = require('./routes/studios.routes');
-const notificationsRoutes = require('./routes/notifications.routes');
-const ticketPriceRoutes = require('./routes/ticketPrice.routes');
-const scheduleManagementRoutes = require('./routes/scheduleManagement.routes');
 const promotionController = require('./controllers/promotionController');
 const adminPromotionRoutes = require('./routes/admin/promotions.routes');
 const addOnSalesRoutes = require('./routes/admin/addOnSales.routes');
+const showtimesRoutes = require('./routes/showtimes.routes');
+const bookingsRoutes = require('./routes/bookings.routes');
 
 // Import tasks
-const { scheduleCleanup } = require('./tasks/notificationCleanup.task');
 const { toCamelCaseDeep } = require('./utils/caseUtils');
 
 const app = express();
@@ -75,10 +73,9 @@ app.use('/api/booking', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/addons', addonsRoutes);
 app.use('/api/admin/studios', studiosRoutes);
-app.use('/api/notifications', notificationsRoutes);
-app.use('/api/admin/prices', ticketPriceRoutes);
-app.use('/api/admin/schedule', scheduleManagementRoutes);
 app.use('/api/admin/addon-sales', addOnSalesRoutes);
+app.use('/api/showtimes', showtimesRoutes);
+app.use('/api/bookings', bookingsRoutes);
 
 // Middleware to enforce camelCase on all outgoing JSON responses
 app.use((req, res, next) => {
@@ -109,8 +106,6 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    // Start the notification cleanup task
-    scheduleCleanup();
 });
 
 module.exports = app; 

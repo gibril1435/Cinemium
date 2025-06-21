@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import api from '../api';
+import QRCode from 'qrcode';
 
 interface Booking {
-  id: string;
+  bookingId: string;
   movieTitle: string;
   posterUrl?: string;
   showtime: {
@@ -11,8 +12,6 @@ interface Booking {
     studioName?: string;
   } | null;
   seats: string[];
-  qrCodeUrl?: string;
-  ticketPdfUrl?: string;
   totalAmount: number;
   status: string;
 }
@@ -23,6 +22,7 @@ const PaymentSuccess: React.FC = () => {
   const bookingId = params.get('bookingId');
 
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [qrCode, setQrCode] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,16 +33,32 @@ const PaymentSuccess: React.FC = () => {
       return;
     }
     setLoading(true);
-    api.get(`/booking/${bookingId}`)
-      .then(res => {
-        setBooking(res.data);
-        setLoading(false);
-      })
-      .catch(err => {
+
+    const fetchBookingData = async () => {
+      try {
+        const bookingRes = await api.get(`/booking/${bookingId}`);
+        const bookingData = bookingRes.data;
+
+        setBooking(bookingData);
+
+        // Generate QR code
+        const qrCodeData = await QRCode.toDataURL(JSON.stringify({
+          bookingId: bookingData.bookingId,
+          seats: bookingData.seats.join(', '),
+          showtime: bookingData.showtime?.showDateTime,
+          studio: bookingData.showtime?.studioName || 'N/A'
+        }));
+        setQrCode(qrCodeData);
+
+      } catch (err) {
         console.error('Error fetching booking details:', err);
         setError('Failed to load booking details.');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    
+    fetchBookingData();
   }, [bookingId]);
 
   if (loading) {
@@ -128,11 +144,11 @@ const PaymentSuccess: React.FC = () => {
             </div>
 
             <div className="border-t border-dashed border-gray-600 pt-6 flex flex-col items-center">
-              {booking.qrCodeUrl && (
-                <img src={booking.qrCodeUrl} alt="QR Code" className="w-40 h-40 rounded-lg mb-4" />
+              {qrCode && (
+                <img src={qrCode} alt="QR Code" className="w-40 h-40 rounded-lg mb-4" />
               )}
               <p className="text-xs text-gray-500 text-center">Scan this QR code at the cinema entrance</p>
-              <p className="text-xs text-gray-500 text-center mt-1">Booking ID: {booking.id}</p>
+              <p className="text-xs text-gray-500 text-center mt-1">Booking ID: {booking.bookingId}</p>
             </div>
           </div>
         </div>

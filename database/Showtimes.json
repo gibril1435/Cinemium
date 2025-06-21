@@ -11,8 +11,22 @@
     "showtimeId": 2,
     "movieId": 2,
     "studioId": 2,
-    "showDateTime": "2024-06-19T16:00:00Z",
+    "showDateTime": "2024-06-19T10:00:00.000Z",
     "price": 60000,
     "isActive": true
+  },
+  {
+    "movieId": 6,
+    "studioId": 1,
+    "showDateTime": "2025-06-20T18:00:00.000Z",
+    "price": 50000,
+    "showtimeId": 3
+  },
+  {
+    "movieId": 1,
+    "studioId": 3,
+    "showDateTime": "2025-06-21T11:10:00.000Z",
+    "price": 50000,
+    "showtimeId": 4
   }
-] 
+]

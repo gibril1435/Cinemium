@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { readTable, writeTable } = require('../utils/jsonDb');
 const { Op } = require('sequelize');
-const { isAdmin } = require('../middleware/auth');
-const { startOfDay, endOfDay, startOfWeek, endOfWeek } = require('date-fns');
+const { authenticate, isAdmin } = require('../middleware/auth');
+const { startOfDay, endOfDay, startOfWeek, endOfWeek, subDays } = require('date-fns');
 
-// Apply admin middleware to all routes
+// Apply authentication and admin middleware to all routes
+router.use(authenticate);
 router.use(isAdmin);
 
 /**
@@ -40,6 +41,102 @@ router.use(isAdmin);
  *       401:
  *         description: Unauthorized
  */
+
+// Implement root GET /api/admin to return dashboard summary
+router.get('/', async (req, res) => {
+    try {
+        // Read all bookings and showtimes
+        const bookings = readTable('Bookings');
+        const showtimes = readTable('Showtimes');
+        const movies = readTable('Movies');
+        const bookingSeats = readTable('BookingSeats');
+
+        // All-time stats
+        const totalTickets = bookingSeats.length;
+        const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+        const activeMovies = movies.length;
+
+        // Filter bookings for the last 7 days for the pie chart
+        const oneWeekAgo = subDays(new Date(), 7);
+        const weeklyBookings = bookings.filter(b => new Date(b.bookingDate) >= oneWeekAgo);
+
+        // Film distribution (tickets sold per movie for the last week)
+        const movieTicketMap = {};
+        weeklyBookings.forEach(b => {
+            const showtime = showtimes.find(s => s.showtimeId === b.showtimeId);
+            if (!showtime) return;
+            const movie = movies.find(m => m.movieId === showtime.movieId);
+            if (!movie) return;
+            if (!movieTicketMap[movie.title]) movieTicketMap[movie.title] = 0;
+            const ticketsForBooking = bookingSeats.filter(bs => bs.bookingId === b.bookingId).length;
+            movieTicketMap[movie.title] += ticketsForBooking;
+        });
+
+        const totalTicketsAll = Object.values(movieTicketMap).reduce((a, b) => a + b, 0) || 1;
+        const filmDistribution = Object.entries(movieTicketMap).map(([movieTitle, ticketsSold]) => ({
+            movieTitle,
+            ticketsSold,
+            percentage: (ticketsSold / totalTicketsAll) * 100
+        }));
+
+        // Sales trend (last 7 days)
+        const today = new Date();
+        const salesTrend = [];
+        for (let i = 6; i >= 0; i--) {
+            const day = new Date(today);
+            day.setDate(today.getDate() - i);
+            const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
+            const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59, 999);
+            const dayBookings = bookings.filter(b => {
+                const bookingDate = new Date(b.bookingDate);
+                return bookingDate >= dayStart && bookingDate <= dayEnd;
+            });
+            salesTrend.push({
+                date: dayStart.toISOString().slice(0, 10),
+                ticketsSold: dayBookings.length,
+                revenue: dayBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+            });
+        }
+
+        // Recent bookings (last 5)
+        const recentBookings = bookings
+            .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate))
+            .slice(0, 5)
+            .map(b => {
+                const showtime = showtimes.find(s => s.showtimeId === b.showtimeId);
+                const movie = showtime ? movies.find(m => m.movieId === showtime.movieId) : null;
+                const seats = bookingSeats
+                    .filter(bs => bs.bookingId === b.bookingId)
+                    .map(bs => bs.seatNumber)
+                    .join(', ');
+                return {
+                    bookingId: b.bookingId,
+                    movieTitle: movie ? movie.title : 'Unknown',
+                    showtime: showtime ? showtime.showDateTime : '',
+                    seats,
+                    amount: b.totalAmount,
+                    status: b.status
+                };
+            });
+
+        res.json({
+            allTimeStats: {
+                totalTickets,
+                totalRevenue,
+                activeMovies
+            },
+            filmDistribution,
+            salesTrend,
+            recentBookings
+        });
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to fetch dashboard data'
+        });
+    }
+});
 
 // Get dashboard summary
 router.get('/dashboard', async (req, res) => {
@@ -118,26 +215,59 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// Get weekly sales history
+// Get weekly sales history (file-based)
 router.get('/sales/weeks', async (req, res) => {
     try {
-        const weeks = await Transaction.findAll({
-            attributes: [
-                [sequelize.fn('DATE_TRUNC', 'week', sequelize.col('transactionDate')), 'weekStart'],
-                [sequelize.fn('COUNT', sequelize.col('id')), 'totalTickets'],
-                [sequelize.fn('SUM', sequelize.col('totalAmount')), 'totalSales']
-            ],
-            group: [sequelize.fn('DATE_TRUNC', 'week', sequelize.col('transactionDate'))],
-            order: [[sequelize.fn('DATE_TRUNC', 'week', sequelize.col('transactionDate')), 'DESC']]
+        const { startDate, endDate } = req.query;
+        const allBookings = readTable('Bookings');
+        
+        const filteredBookings = (startDate && endDate)
+            ? allBookings.filter(b => {
+                const bookingDate = new Date(b.bookingDate);
+                const start = new Date(startDate);
+                start.setHours(0,0,0,0);
+                const end = new Date(endDate);
+                end.setHours(23,59,59,999);
+                return bookingDate >= start && bookingDate <= end;
+            })
+            : allBookings;
+
+        const totalSales = filteredBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+        const bookingSeats = readTable('BookingSeats');
+        const filteredBookingIds = new Set(filteredBookings.map(b => b.bookingId));
+        const totalTickets = bookingSeats.filter(bs => filteredBookingIds.has(bs.bookingId)).length;
+
+
+        if (!filteredBookings.length) {
+            return res.json({ dailyData: [], totalSales: 0, totalTickets: 0 });
+        }
+
+        // Group bookings by day
+        const daysMap = {};
+        filteredBookings.forEach(b => {
+            const dayKey = new Date(b.bookingDate).toISOString().slice(0, 10);
+
+            if (!daysMap[dayKey]) {
+                daysMap[dayKey] = { date: dayKey, totalSales: 0, bookingIds: new Set() };
+            }
+            daysMap[dayKey].totalSales += b.totalAmount || 0;
+            daysMap[dayKey].bookingIds.add(b.bookingId);
         });
 
+        const dailyData = Object.values(daysMap).map(d => {
+            const ticketsInDay = bookingSeats.filter(bs => d.bookingIds.has(bs.bookingId)).length;
+            return {
+                date: d.date,
+                totalSales: d.totalSales,
+                totalTickets: ticketsInDay
+            };
+        }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+
         res.json({
-            weeks: weeks.map(week => ({
-                weekStart: week.weekStart,
-                weekEnd: new Date(week.weekStart.getTime() + 6 * 24 * 60 * 60 * 1000),
-                totalSales: week.totalSales,
-                totalTickets: week.totalTickets
-            }))
+            dailyData,
+            totalSales,
+            totalTickets,
         });
     } catch (error) {
         console.error('Error fetching weekly sales:', error);
