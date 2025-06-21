@@ -8,7 +8,7 @@ A comprehensive cinema management system with a customer-facing booking interfac
 
 ## Academic Report
 
-[View the Academic Report (Google Docs)](https://docs.google.com/document/d/12345/edit?usp=sharing)
+[View the Academic Report (Google Docs)]((https://docs.google.com/document/d/1duKe4aXast7hD65MvSeZIIxzBR-HDKAAjZoW0FYkLBc/edit?usp=sharing))
 
 ## 🏗️ Project Structure
 
